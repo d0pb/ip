@@ -1,11 +1,13 @@
 import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Runs the Bos chatbot and stores tasks entered during the current session.
  */
 public class Bos {
-    private static final String DIVIDER = "____________________________________________________________";
     private static final String INDENT = "     ";
+    private static final String DIVIDER = INDENT + "____________________________________________________________";
     private static final int MAX_TASKS = 100;
     private static final String BANNER = " ____            \n"
                 + "| __ )  ___  ___ \n"
@@ -16,6 +18,14 @@ public class Bos {
     private static final String LIST_COMMAND = "list";
     private static final String MARK_COMMAND = "mark ";
     private static final String UNMARK_COMMAND = "unmark ";
+    private static final String TODO_COMMAND = "todo ";
+    private static final String DEADLINE_COMMAND = "deadline ";
+    private static final String EVENT_COMMAND = "event ";
+    private static final Pattern MARK_PATTERN = Pattern.compile(MARK_COMMAND + "(\\d+)");
+    private static final Pattern UNMARK_PATTERN = Pattern.compile(UNMARK_COMMAND + "(\\d+)");
+    private static final Pattern TODO_PATTERN = Pattern.compile(TODO_COMMAND + "(.*)");
+    private static final Pattern DEADLINE_PATTERN = Pattern.compile(DEADLINE_COMMAND + "(?<title>.*?)\\s+/by\\s+(?<date>.*)$", Pattern.CASE_INSENSITIVE);
+    private static final Pattern EVENT_PATTERN = Pattern.compile(EVENT_COMMAND + "(?<title>.*?)\\s+/from\\s+(?<from>.*?)\\s+/to\\s+(?<to>.*)$");
 
     /**
      * Starts Bos and processes input until the user enters {@code bye}.
@@ -63,21 +73,55 @@ public class Bos {
 
             if (BYE_COMMAND.equals(input)) {
                 return;
+
             } else if (LIST_COMMAND.equals(input)) {
                 System.out.println(INDENT + "Here are the tasks in your list:");
                 for (int i = 0; i < taskCount; i++) {
-                    System.out.println(INDENT + (i + 1) + ".[" + tasks[i].getStatusIcon() + "] " + tasks[i]);
+                    System.out.println(INDENT + (i + 1) + "." + tasks[i]);
                 }
+
             } else if (input.startsWith(MARK_COMMAND)) {
-                int taskIndex = getTaskIndex(input, MARK_COMMAND);
+                Matcher markMatcher = MARK_PATTERN.matcher(input);
+                markMatcher.find();
+                int taskIndex = Integer.parseInt(markMatcher.group(1)) - 1;
                 tasks[taskIndex].markAsDone();
                 System.out.println(INDENT + "Nice! I've marked this task as done:");
-                printTask(tasks[taskIndex]);
+                System.out.println(INDENT + tasks[taskIndex]);
+
             } else if (input.startsWith(UNMARK_COMMAND)) {
-                int taskIndex = getTaskIndex(input, UNMARK_COMMAND);
+                Matcher unmarkMatcher = UNMARK_PATTERN.matcher(input);
+                unmarkMatcher.find();
+                int taskIndex = Integer.parseInt(unmarkMatcher.group(1)) - 1;
                 tasks[taskIndex].markAsNotDone();
                 System.out.println(INDENT + "OK, I've marked this task as not done yet:");
-                printTask(tasks[taskIndex]);
+                System.out.println(INDENT + tasks[taskIndex]);
+
+            } else if (input.startsWith(TODO_COMMAND)) {
+                Matcher todoMatcher = TODO_PATTERN.matcher(input);
+                todoMatcher.find();
+                Task task = new ToDo(todoMatcher.group(1));
+                tasks[taskCount++] = task;
+                System.out.println(INDENT + "Got it. I've added this task:");
+                System.out.println(INDENT + "  " + task);
+                System.out.println(INDENT + "Now you have " + taskCount + " tasks in the list.");
+            
+            } else if (input.startsWith(DEADLINE_COMMAND)) {
+                Matcher deadlineMatcher = DEADLINE_PATTERN.matcher(input);
+                deadlineMatcher.find();
+                Task task = new Deadline(deadlineMatcher.group("title"), deadlineMatcher.group("date"));
+                tasks[taskCount++] = task;
+                System.out.println(INDENT + "Got it. I've added this task:");
+                System.out.println(INDENT + "  " + task);
+                System.out.println(INDENT + "Now you have " + taskCount + " tasks in the list.");
+                
+            } else if (input.startsWith(EVENT_COMMAND)) {
+                Matcher eventMatcher = EVENT_PATTERN.matcher(input);
+                eventMatcher.find();
+                Task task = new Event(eventMatcher.group("title"), eventMatcher.group("from"), eventMatcher.group("to"));
+                tasks[taskCount++] = task;
+                System.out.println(INDENT + "Got it. I've added this task:");
+                System.out.println(INDENT + "  " + task);
+                System.out.println(INDENT + "Now you have " + taskCount + " tasks in the list.");
             } else {
                 tasks[taskCount++] = new Task(input);
                 System.out.println(INDENT + "added: " + input);
@@ -85,25 +129,5 @@ public class Bos {
 
             System.out.println(DIVIDER);
         }
-    }
-
-    /**
-     * Converts the user-facing task number in a command into an array index.
-     *
-     * @param input full command entered by the user
-     * @param commandPrefix command text before the task number
-     * @return zero-based index of the selected task
-     */
-    private static int getTaskIndex(String input, String commandPrefix) {
-        return Integer.parseInt(input.substring(commandPrefix.length())) - 1;
-    }
-
-    /**
-     * Prints a task with extra indentation for a command confirmation.
-     *
-     * @param task task to print
-     */
-    private static void printTask(Task task) {
-        System.out.println(INDENT + "  [" + task.getStatusIcon() + "] " + task);
     }
 }
