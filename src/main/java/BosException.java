@@ -14,11 +14,12 @@ public class BosException extends Exception {
     /**
      * Creates an error for a task command with no description.
      *
-     * @param taskType type of task being created
+     * @param commandType task-creation command with no description
      * @return exception describing the missing description
      */
-    public static BosException emptyDescription(String taskType) {
-        String article = taskType.equals("event") ? "an" : "a";
+    public static BosException emptyDescription(CommandType commandType) {
+        String taskType = commandType.getKeyword();
+        String article = commandType == CommandType.EVENT ? "an" : "a";
         return new BosException("The description of " + article + " " + taskType + " cannot be empty.");
     }
 

@@ -14,14 +14,6 @@ public class Bos {
                 + "|  _ \\ / _ \\/ __|\n"
                 + "| |_) | (_) \\__ \\\n"
                 + "|____/ \\___/|___/";
-    private static final String BYE_COMMAND = "bye";
-    private static final String LIST_COMMAND = "list";
-    private static final String MARK_COMMAND = "mark";
-    private static final String UNMARK_COMMAND = "unmark";
-    private static final String DELETE_COMMAND = "delete";
-    private static final String TODO_COMMAND = "todo";
-    private static final String DEADLINE_COMMAND = "deadline";
-    private static final String EVENT_COMMAND = "event";
     private static final Pattern MARK_PATTERN = Pattern.compile("^mark\\s+(\\d+)\\s*$");
     private static final Pattern UNMARK_PATTERN = Pattern.compile("^unmark\\s+(\\d+)\\s*$");
     private static final Pattern DELETE_PATTERN = Pattern.compile("^delete\\s+(\\d+)\\s*$");
@@ -76,55 +68,60 @@ public class Bos {
             System.out.println(DIVIDER);
 
             try {
-                if (BYE_COMMAND.equals(input)) {
+                CommandType commandType = CommandType.fromInput(input);
+                switch (commandType) {
+                case BYE:
                     return;
-
-                } else if (LIST_COMMAND.equals(input)) {
+                case LIST:
                     System.out.println(INDENT + "Here are the tasks in your list:");
                     for (int i = 0; i < tasks.size(); i++) {
                         System.out.println(INDENT + (i + 1) + "." + tasks.get(i));
                     }
-
-                } else if (isCommand(input, MARK_COMMAND)) {
+                    break;
+                case MARK: {
                     int taskIndex = getTaskIndex(input, MARK_PATTERN, tasks.size());
                     Task task = tasks.get(taskIndex);
                     task.markAsDone();
                     System.out.println(INDENT + "Nice! I've marked this task as done:");
                     System.out.println(INDENT + task);
-
-                } else if (isCommand(input, UNMARK_COMMAND)) {
+                    break;
+                }
+                case UNMARK: {
                     int taskIndex = getTaskIndex(input, UNMARK_PATTERN, tasks.size());
                     Task task = tasks.get(taskIndex);
                     task.markAsNotDone();
                     System.out.println(INDENT + "OK, I've marked this task as not done yet:");
                     System.out.println(INDENT + task);
-
-                } else if (isCommand(input, DELETE_COMMAND)) {
+                    break;
+                }
+                case DELETE: {
                     int taskIndex = getTaskIndex(input, DELETE_PATTERN, tasks.size());
                     Task removedTask = tasks.remove(taskIndex);
                     System.out.println(INDENT + "Noted. I've removed this task:");
                     System.out.println(INDENT + "  " + removedTask);
                     System.out.println(INDENT + "Now you have " + tasks.size() + " tasks in the list.");
-
-                } else if (isCommand(input, TODO_COMMAND)) {
+                    break;
+                }
+                case TODO: {
                     Matcher todoMatcher = TODO_PATTERN.matcher(input);
                     if (!todoMatcher.matches() || todoMatcher.group(1).isBlank()) {
-                        throw BosException.emptyDescription(TODO_COMMAND);
+                        throw BosException.emptyDescription(CommandType.TODO);
                     }
                     Task task = new ToDo(todoMatcher.group(1).trim());
                     tasks.add(task);
                     printTaskAdded(task, tasks.size());
-
-                } else if (isCommand(input, DEADLINE_COMMAND)) {
+                    break;
+                }
+                case DEADLINE: {
                     Matcher deadlineMatcher = DEADLINE_PATTERN.matcher(input);
-                    if (input.trim().equals(DEADLINE_COMMAND)) {
-                        throw BosException.emptyDescription(DEADLINE_COMMAND);
+                    if (input.trim().equals(CommandType.DEADLINE.getKeyword())) {
+                        throw BosException.emptyDescription(CommandType.DEADLINE);
                     }
                     if (!deadlineMatcher.matches()) {
                         throw BosException.invalidFormat("deadline DESCRIPTION /by DATE");
                     }
                     if (deadlineMatcher.group("title").isBlank()) {
-                        throw BosException.emptyDescription(DEADLINE_COMMAND);
+                        throw BosException.emptyDescription(CommandType.DEADLINE);
                     }
                     if (deadlineMatcher.group("date").isBlank()) {
                         throw BosException.invalidFormat("deadline DESCRIPTION /by DATE");
@@ -133,17 +130,18 @@ public class Bos {
                             deadlineMatcher.group("date").trim());
                     tasks.add(task);
                     printTaskAdded(task, tasks.size());
-
-                } else if (isCommand(input, EVENT_COMMAND)) {
+                    break;
+                }
+                case EVENT: {
                     Matcher eventMatcher = EVENT_PATTERN.matcher(input);
-                    if (input.trim().equals(EVENT_COMMAND)) {
-                        throw BosException.emptyDescription(EVENT_COMMAND);
+                    if (input.trim().equals(CommandType.EVENT.getKeyword())) {
+                        throw BosException.emptyDescription(CommandType.EVENT);
                     }
                     if (!eventMatcher.matches()) {
                         throw BosException.invalidFormat("event DESCRIPTION /from START /to END");
                     }
                     if (eventMatcher.group("title").isBlank()) {
-                        throw BosException.emptyDescription(EVENT_COMMAND);
+                        throw BosException.emptyDescription(CommandType.EVENT);
                     }
                     if (eventMatcher.group("from").isBlank() || eventMatcher.group("to").isBlank()) {
                         throw BosException.invalidFormat("event DESCRIPTION /from START /to END");
@@ -152,7 +150,9 @@ public class Bos {
                             eventMatcher.group("from").trim(), eventMatcher.group("to").trim());
                     tasks.add(task);
                     printTaskAdded(task, tasks.size());
-                } else {
+                    break;
+                }
+                case UNKNOWN:
                     throw BosException.unknownCommand();
                 }
             } catch (BosException exception) {
@@ -161,13 +161,6 @@ public class Bos {
 
             System.out.println(DIVIDER);
         }
-    }
-
-    /**
-     * Checks whether the input starts with a complete command word.
-     */
-    private static boolean isCommand(String input, String command) {
-        return input.equals(command) || input.startsWith(command + " ");
     }
 
     /**
