@@ -59,12 +59,4 @@ public class BosException extends Exception {
         return new BosException("I'm sorry, but I don't know what that means :-(");
     }
 
-    /**
-     * Creates an error when no more tasks can be stored.
-     *
-     * @return exception describing the full task list
-     */
-    public static BosException taskListFull() {
-        return new BosException("Your task list is full. Remove a task before adding another one.");
-    }
 }

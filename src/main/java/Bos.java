@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -8,7 +9,6 @@ import java.util.regex.Pattern;
 public class Bos {
     private static final String INDENT = "     ";
     private static final String DIVIDER = INDENT + "____________________________________________________________";
-    private static final int MAX_TASKS = 100;
     private static final String BANNER = " ____            \n"
                 + "| __ )  ___  ___ \n"
                 + "|  _ \\ / _ \\/ __|\n"
@@ -18,11 +18,13 @@ public class Bos {
     private static final String LIST_COMMAND = "list";
     private static final String MARK_COMMAND = "mark";
     private static final String UNMARK_COMMAND = "unmark";
+    private static final String DELETE_COMMAND = "delete";
     private static final String TODO_COMMAND = "todo";
     private static final String DEADLINE_COMMAND = "deadline";
     private static final String EVENT_COMMAND = "event";
     private static final Pattern MARK_PATTERN = Pattern.compile("^mark\\s+(\\d+)\\s*$");
     private static final Pattern UNMARK_PATTERN = Pattern.compile("^unmark\\s+(\\d+)\\s*$");
+    private static final Pattern DELETE_PATTERN = Pattern.compile("^delete\\s+(\\d+)\\s*$");
     private static final Pattern TODO_PATTERN = Pattern.compile("^todo\\s+(.*)$");
     private static final Pattern DEADLINE_PATTERN = Pattern.compile(
             "^deadline\\s*(?<title>.*?)\\s*/by\\s*(?<date>.*)$", Pattern.CASE_INSENSITIVE);
@@ -67,8 +69,7 @@ public class Bos {
      * @param scanner scanner used to read commands from standard input
      */
     private static void processCommands(Scanner scanner) {
-        Task[] tasks = new Task[MAX_TASKS];
-        int taskCount = 0;
+        ArrayList<Task> tasks = new ArrayList<>();
 
         while (scanner.hasNextLine()) {
             String input = scanner.nextLine();
@@ -80,31 +81,39 @@ public class Bos {
 
                 } else if (LIST_COMMAND.equals(input)) {
                     System.out.println(INDENT + "Here are the tasks in your list:");
-                    for (int i = 0; i < taskCount; i++) {
-                        System.out.println(INDENT + (i + 1) + "." + tasks[i]);
+                    for (int i = 0; i < tasks.size(); i++) {
+                        System.out.println(INDENT + (i + 1) + "." + tasks.get(i));
                     }
 
                 } else if (isCommand(input, MARK_COMMAND)) {
-                    int taskIndex = getTaskIndex(input, MARK_PATTERN, taskCount);
-                    tasks[taskIndex].markAsDone();
+                    int taskIndex = getTaskIndex(input, MARK_PATTERN, tasks.size());
+                    Task task = tasks.get(taskIndex);
+                    task.markAsDone();
                     System.out.println(INDENT + "Nice! I've marked this task as done:");
-                    System.out.println(INDENT + tasks[taskIndex]);
+                    System.out.println(INDENT + task);
 
                 } else if (isCommand(input, UNMARK_COMMAND)) {
-                    int taskIndex = getTaskIndex(input, UNMARK_PATTERN, taskCount);
-                    tasks[taskIndex].markAsNotDone();
+                    int taskIndex = getTaskIndex(input, UNMARK_PATTERN, tasks.size());
+                    Task task = tasks.get(taskIndex);
+                    task.markAsNotDone();
                     System.out.println(INDENT + "OK, I've marked this task as not done yet:");
-                    System.out.println(INDENT + tasks[taskIndex]);
+                    System.out.println(INDENT + task);
+
+                } else if (isCommand(input, DELETE_COMMAND)) {
+                    int taskIndex = getTaskIndex(input, DELETE_PATTERN, tasks.size());
+                    Task removedTask = tasks.remove(taskIndex);
+                    System.out.println(INDENT + "Noted. I've removed this task:");
+                    System.out.println(INDENT + "  " + removedTask);
+                    System.out.println(INDENT + "Now you have " + tasks.size() + " tasks in the list.");
 
                 } else if (isCommand(input, TODO_COMMAND)) {
                     Matcher todoMatcher = TODO_PATTERN.matcher(input);
                     if (!todoMatcher.matches() || todoMatcher.group(1).isBlank()) {
                         throw BosException.emptyDescription(TODO_COMMAND);
                     }
-                    ensureTaskListHasSpace(taskCount);
                     Task task = new ToDo(todoMatcher.group(1).trim());
-                    tasks[taskCount++] = task;
-                    printTaskAdded(task, taskCount);
+                    tasks.add(task);
+                    printTaskAdded(task, tasks.size());
 
                 } else if (isCommand(input, DEADLINE_COMMAND)) {
                     Matcher deadlineMatcher = DEADLINE_PATTERN.matcher(input);
@@ -120,11 +129,10 @@ public class Bos {
                     if (deadlineMatcher.group("date").isBlank()) {
                         throw BosException.invalidFormat("deadline DESCRIPTION /by DATE");
                     }
-                    ensureTaskListHasSpace(taskCount);
                     Task task = new Deadline(deadlineMatcher.group("title").trim(),
                             deadlineMatcher.group("date").trim());
-                    tasks[taskCount++] = task;
-                    printTaskAdded(task, taskCount);
+                    tasks.add(task);
+                    printTaskAdded(task, tasks.size());
 
                 } else if (isCommand(input, EVENT_COMMAND)) {
                     Matcher eventMatcher = EVENT_PATTERN.matcher(input);
@@ -140,11 +148,10 @@ public class Bos {
                     if (eventMatcher.group("from").isBlank() || eventMatcher.group("to").isBlank()) {
                         throw BosException.invalidFormat("event DESCRIPTION /from START /to END");
                     }
-                    ensureTaskListHasSpace(taskCount);
                     Task task = new Event(eventMatcher.group("title").trim(),
                             eventMatcher.group("from").trim(), eventMatcher.group("to").trim());
-                    tasks[taskCount++] = task;
-                    printTaskAdded(task, taskCount);
+                    tasks.add(task);
+                    printTaskAdded(task, tasks.size());
                 } else {
                     throw BosException.unknownCommand();
                 }
@@ -164,7 +171,7 @@ public class Bos {
     }
 
     /**
-     * Reads and validates the task number in a mark or unmark command.
+     * Reads and validates a task number from a command.
      */
     private static int getTaskIndex(String input, Pattern pattern, int taskCount) throws BosException {
         Matcher matcher = pattern.matcher(input);
@@ -183,15 +190,6 @@ public class Bos {
             throw BosException.taskNotFound();
         }
         return taskIndex;
-    }
-
-    /**
-     * Ensures that adding another task will not overflow the fixed-size array.
-     */
-    private static void ensureTaskListHasSpace(int taskCount) throws BosException {
-        if (taskCount >= MAX_TASKS) {
-            throw BosException.taskListFull();
-        }
     }
 
     /**
