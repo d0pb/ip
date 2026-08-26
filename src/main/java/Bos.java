@@ -1,3 +1,4 @@
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.regex.Matcher;
@@ -14,6 +15,7 @@ public class Bos {
                 + "|  _ \\ / _ \\/ __|\n"
                 + "| |_) | (_) \\__ \\\n"
                 + "|____/ \\___/|___/";
+
     private static final Pattern MARK_PATTERN = Pattern.compile("^mark\\s+(\\d+)\\s*$");
     private static final Pattern UNMARK_PATTERN = Pattern.compile("^unmark\\s+(\\d+)\\s*$");
     private static final Pattern DELETE_PATTERN = Pattern.compile("^delete\\s+(\\d+)\\s*$");
@@ -23,6 +25,9 @@ public class Bos {
     private static final Pattern EVENT_PATTERN = Pattern.compile(
             "^event\\s*(?<title>.*?)\\s*/from\\s*(?<from>.*?)\\s*/to\\s*(?<to>.*)$",
             Pattern.CASE_INSENSITIVE);
+
+    private static final String TEXT_FILE_PATH = "data/tasks.txt";
+    private static final Storage STORAGE = new Storage(TEXT_FILE_PATH);
 
     /**
      * Starts Bos and processes input until the user enters {@code bye}.
@@ -34,6 +39,7 @@ public class Bos {
         Scanner scanner = new Scanner(System.in);
         processCommands(scanner);
         printExit();
+
     }
 
     /**
@@ -63,6 +69,14 @@ public class Bos {
     private static void processCommands(Scanner scanner) {
         ArrayList<Task> tasks = new ArrayList<>();
 
+        try {
+            tasks.addAll(STORAGE.loadTasks());
+        } catch (BosException exception) {
+            System.out.println("tasks.txt is corrupted (" + exception.getMessage() + "), resetting...");
+        } catch (IOException | SecurityException exception) {
+            System.out.println("Cannot access the task file, recording from scratch...");
+        }
+
         while (scanner.hasNextLine()) {
             String input = scanner.nextLine();
             System.out.println(DIVIDER);
@@ -71,6 +85,7 @@ public class Bos {
                 CommandType commandType = CommandType.fromInput(input);
                 switch (commandType) {
                 case BYE:
+                    saveTasksToFile(tasks);
                     return;
                 case LIST:
                     System.out.println(INDENT + "Here are the tasks in your list:");
@@ -82,6 +97,7 @@ public class Bos {
                     int taskIndex = getTaskIndex(input, MARK_PATTERN, tasks.size());
                     Task task = tasks.get(taskIndex);
                     task.markAsDone();
+                    saveTasksToFile(tasks);
                     System.out.println(INDENT + "Nice! I've marked this task as done:");
                     System.out.println(INDENT + task);
                     break;
@@ -90,6 +106,7 @@ public class Bos {
                     int taskIndex = getTaskIndex(input, UNMARK_PATTERN, tasks.size());
                     Task task = tasks.get(taskIndex);
                     task.markAsNotDone();
+                    saveTasksToFile(tasks);
                     System.out.println(INDENT + "OK, I've marked this task as not done yet:");
                     System.out.println(INDENT + task);
                     break;
@@ -97,6 +114,7 @@ public class Bos {
                 case DELETE: {
                     int taskIndex = getTaskIndex(input, DELETE_PATTERN, tasks.size());
                     Task removedTask = tasks.remove(taskIndex);
+                    saveTasksToFile(tasks);
                     System.out.println(INDENT + "Noted. I've removed this task:");
                     System.out.println(INDENT + "  " + removedTask);
                     System.out.println(INDENT + "Now you have " + tasks.size() + " tasks in the list.");
@@ -107,8 +125,11 @@ public class Bos {
                     if (!todoMatcher.matches() || todoMatcher.group(1).isBlank()) {
                         throw BosException.emptyDescription(CommandType.TODO);
                     }
-                    Task task = new ToDo(todoMatcher.group(1).trim());
+                    String title = todoMatcher.group(1).trim();
+                    validateStorageFields(title);
+                    Task task = new ToDo(title);
                     tasks.add(task);
+                    saveTasksToFile(tasks);
                     printTaskAdded(task, tasks.size());
                     break;
                 }
@@ -126,9 +147,12 @@ public class Bos {
                     if (deadlineMatcher.group("date").isBlank()) {
                         throw BosException.invalidFormat("deadline DESCRIPTION /by DATE");
                     }
-                    Task task = new Deadline(deadlineMatcher.group("title").trim(),
-                            deadlineMatcher.group("date").trim());
+                    String title = deadlineMatcher.group("title").trim();
+                    String date = deadlineMatcher.group("date").trim();
+                    validateStorageFields(title, date);
+                    Task task = new Deadline(title, date);
                     tasks.add(task);
+                    saveTasksToFile(tasks);
                     printTaskAdded(task, tasks.size());
                     break;
                 }
@@ -146,9 +170,13 @@ public class Bos {
                     if (eventMatcher.group("from").isBlank() || eventMatcher.group("to").isBlank()) {
                         throw BosException.invalidFormat("event DESCRIPTION /from START /to END");
                     }
-                    Task task = new Event(eventMatcher.group("title").trim(),
-                            eventMatcher.group("from").trim(), eventMatcher.group("to").trim());
+                    String title = eventMatcher.group("title").trim();
+                    String from = eventMatcher.group("from").trim();
+                    String to = eventMatcher.group("to").trim();
+                    validateStorageFields(title, from, to);
+                    Task task = new Event(title, from, to);
                     tasks.add(task);
+                    saveTasksToFile(tasks);
                     printTaskAdded(task, tasks.size());
                     break;
                 }
@@ -161,6 +189,9 @@ public class Bos {
 
             System.out.println(DIVIDER);
         }
+
+        saveTasksToFile(tasks);
+
     }
 
     /**
@@ -183,6 +214,28 @@ public class Bos {
             throw BosException.taskNotFound();
         }
         return taskIndex;
+    }
+
+    /**
+     * Saves the current task list and reports failures without stopping Bos.
+     */
+    private static void saveTasksToFile(ArrayList<Task> tasks) {
+        try {
+            STORAGE.saveTasks(tasks);
+        } catch (IOException | SecurityException exception) {
+            System.out.println(INDENT + "OOPS!!! Unable to save tasks onto the hard disk.");
+        }
+    }
+
+    /**
+     * Rejects the storage delimiter because it cannot be represented unambiguously.
+     */
+    private static void validateStorageFields(String... fields) throws BosException {
+        for (String field : fields) {
+            if (field.contains("|")) {
+                throw new BosException("Task details cannot contain the | character.");
+            }
+        }
     }
 
     /**

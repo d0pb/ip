@@ -1,7 +1,7 @@
 /**
  * Represents a task with a description and completion status.
  */
-public class Task {
+public abstract class Task {
     protected String description;
     protected boolean isDone;
 
@@ -42,4 +42,11 @@ public class Task {
     public String toString() {
         return "[" + this.getStatusIcon() + "] " + description;
     }
+
+    /**
+     * Converts this task into the text-file storage format.
+     *
+     * @return storage representation of this task
+     */
+    public abstract String toStorageFormat();
 }
