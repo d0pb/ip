@@ -25,7 +25,6 @@ public class Bos {
     private static final Pattern EVENT_PATTERN = Pattern.compile(
             "^event\\s*(?<title>.*?)\\s*/from\\s*(?<from>.*?)\\s*/to\\s*(?<to>.*)$",
             Pattern.CASE_INSENSITIVE);
-
     private static final String TEXT_FILE_PATH = "data/tasks.txt";
     private static final Storage STORAGE = new Storage(TEXT_FILE_PATH);
 
