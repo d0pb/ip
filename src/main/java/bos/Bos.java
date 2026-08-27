@@ -1,3 +1,5 @@
+package bos;
+
 import java.io.IOException;
 
 /**

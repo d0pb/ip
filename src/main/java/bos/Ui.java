@@ -1,3 +1,5 @@
+package bos;
+
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.List;

@@ -1,3 +1,5 @@
+package bos;
+
 /**
  * Represents a command that Bos can recognise.
  */

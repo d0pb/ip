@@ -1,3 +1,5 @@
+package bos;
+
 /**
  * Represents a task that takes place between two times.
  */
