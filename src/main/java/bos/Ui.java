@@ -90,6 +90,23 @@ public class Ui {
      */
     public void showTaskList(List<Task> tasks) {
         output.println(INDENT + "Here are the tasks in your list:");
+        showNumberedTasks(tasks);
+    }
+
+    /**
+     * Shows tasks whose descriptions match a find keyword.
+     *
+     * @param tasks matching tasks to display.
+     */
+    public void showMatchingTasks(List<Task> tasks) {
+        output.println(INDENT + "Here are the matching tasks in your list:");
+        showNumberedTasks(tasks);
+    }
+
+    /**
+     * Shows tasks with one-based numbers relative to the supplied list.
+     */
+    private void showNumberedTasks(List<Task> tasks) {
         for (int i = 0; i < tasks.size(); i++) {
             output.println(INDENT + (i + 1) + "." + tasks.get(i));
         }

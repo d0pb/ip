@@ -142,6 +142,31 @@ public class TaskListTest {
     }
 
     /**
+     * Verifies that matching is case-insensitive and preserves the original task order.
+     */
+    @Test
+    public void find_keywordInDescriptions_matchingTasksReturnedInOriginalOrder() {
+        Task firstMatch = new TodoTask("read book");
+        Task nonMatch = new TodoTask("buy groceries");
+        Task secondMatch = new Deadline("return BOOK", "June 6th");
+        TaskList taskList = new TaskList(List.of(firstMatch, nonMatch, secondMatch));
+
+        List<Task> matches = taskList.find("book");
+
+        assertIterableEquals(List.of(firstMatch, secondMatch), matches);
+    }
+
+    /**
+     * Verifies that a keyword absent from all descriptions returns no tasks.
+     */
+    @Test
+    public void find_keywordAbsent_emptyListReturned() {
+        TaskList taskList = new TaskList(List.of(new TodoTask("read book")));
+
+        assertEquals(List.of(), taskList.find("exercise"));
+    }
+
+    /**
      * Verifies that a previously obtained view reflects tasks added later.
      */
     @Test

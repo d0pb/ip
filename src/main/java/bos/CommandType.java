@@ -6,6 +6,7 @@ package bos;
 public enum CommandType {
     BYE("bye"),
     LIST("list"),
+    FIND("find"),
     MARK("mark"),
     UNMARK("unmark"),
     DELETE("delete"),

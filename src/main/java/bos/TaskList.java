@@ -82,6 +82,19 @@ public class TaskList {
     }
 
     /**
+     * Finds tasks whose descriptions contain the given keyword, ignoring case.
+     * The returned list preserves the tasks' original order.
+     *
+     * @param keyword text to search for in task descriptions.
+     * @return matching tasks.
+     */
+    public List<Task> find(String keyword) {
+        return tasks.stream()
+                .filter(task -> task.descriptionContains(keyword))
+                .toList();
+    }
+
+    /**
      * Provides a read-only view for displaying or saving the tasks.
      *
      * @return unmodifiable view of the tasks.

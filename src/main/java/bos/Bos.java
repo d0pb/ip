@@ -50,6 +50,11 @@ public class Bos {
                     case LIST:
                         ui.showTaskList(tasks.getTasks());
                         break;
+                    case FIND: {
+                        String keyword = Parser.parseFindKeyword(input);
+                        ui.showMatchingTasks(tasks.find(keyword));
+                        break;
+                    }
                     case MARK: {
                         int taskIndex = Parser.parseTaskIndex(input, commandType, tasks.getSize());
                         Task task = tasks.mark(taskIndex);
