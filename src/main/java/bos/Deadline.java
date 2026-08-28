@@ -27,12 +27,22 @@ public class Deadline extends Task {
         this.deadline = deadline;
     }
 
+    /**
+     * Returns a readable representation of this deadline and its due time.
+     *
+     * @return formatted deadline for display
+     */
     @Override
     public String toString() {
         return "[D]" + super.toString()
                 + " (by: " + Parser.formatDateTimeForDisplay(this.deadline) + ")";
     }
 
+    /**
+     * Converts this deadline into the text-file storage format.
+     *
+     * @return storage representation of this deadline
+     */
     @Override
     public String toStorageFormat() {
         String mark = this.isDone ? "1" : "0";

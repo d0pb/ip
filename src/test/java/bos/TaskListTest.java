@@ -15,6 +15,9 @@ import org.junit.jupiter.api.Test;
  */
 public class TaskListTest {
 
+    /**
+     * Verifies that the no-argument constructor creates an empty task list.
+     */
     @Test
     public void constructor_noInitialTasks_emptyListCreated() {
         TaskList taskList = new TaskList();
@@ -23,6 +26,9 @@ public class TaskListTest {
         assertEquals(List.of(), taskList.asList());
     }
 
+    /**
+     * Verifies that changing the source list does not change the constructed task list.
+     */
     @Test
     public void constructor_initialTasks_sourceListChanged_taskListUnaffected() {
         Task task = new ToDo("read book");
@@ -36,6 +42,9 @@ public class TaskListTest {
         assertSame(task, taskList.asList().get(0));
     }
 
+    /**
+     * Verifies that adding a task appends it and increases the list size.
+     */
     @Test
     public void add_task_taskAppendedAndSizeIncreased() {
         Task firstTask = new ToDo("read book");
@@ -48,6 +57,9 @@ public class TaskListTest {
         assertIterableEquals(List.of(firstTask, secondTask), taskList.asList());
     }
 
+    /**
+     * Verifies that deleting a valid index removes and returns the selected task.
+     */
     @Test
     public void delete_validIndex_taskRemovedAndReturned() {
         Task firstTask = new ToDo("read book");
@@ -62,6 +74,9 @@ public class TaskListTest {
         assertIterableEquals(List.of(firstTask, lastTask), taskList.asList());
     }
 
+    /**
+     * Verifies that deleting an index outside the list fails.
+     */
     @Test
     public void delete_indexOutsideList_exceptionThrown() {
         TaskList taskList = new TaskList(List.of(new ToDo("read book")));
@@ -70,6 +85,9 @@ public class TaskListTest {
         assertThrows(IndexOutOfBoundsException.class, () -> taskList.delete(1));
     }
 
+    /**
+     * Verifies that marking a valid index completes and returns the selected task.
+     */
     @Test
     public void mark_validIndex_selectedTaskMarkedAndReturned() {
         Task taskToMark = new ToDo("read book");
@@ -83,6 +101,9 @@ public class TaskListTest {
         assertEquals(" ", otherTask.getStatusIcon());
     }
 
+    /**
+     * Verifies that marking an index outside the list fails.
+     */
     @Test
     public void mark_indexOutsideList_exceptionThrown() {
         TaskList taskList = new TaskList(List.of(new ToDo("read book")));
@@ -91,6 +112,9 @@ public class TaskListTest {
         assertThrows(IndexOutOfBoundsException.class, () -> taskList.mark(1));
     }
 
+    /**
+     * Verifies that unmarking a valid index resets and returns the selected task.
+     */
     @Test
     public void unmark_validIndex_selectedTaskUnmarkedAndReturned() {
         Task taskToUnmark = new ToDo("read book");
@@ -106,6 +130,9 @@ public class TaskListTest {
         assertEquals("X", otherTask.getStatusIcon());
     }
 
+    /**
+     * Verifies that unmarking an index outside the list fails.
+     */
     @Test
     public void unmark_indexOutsideList_exceptionThrown() {
         TaskList taskList = new TaskList(List.of(new ToDo("read book")));
@@ -114,6 +141,9 @@ public class TaskListTest {
         assertThrows(IndexOutOfBoundsException.class, () -> taskList.unmark(1));
     }
 
+    /**
+     * Verifies that a previously obtained view reflects tasks added later.
+     */
     @Test
     public void asList_taskAddedAfterViewCreated_viewUpdated() {
         TaskList taskList = new TaskList();
@@ -125,6 +155,9 @@ public class TaskListTest {
         assertIterableEquals(List.of(task), taskView);
     }
 
+    /**
+     * Verifies that callers cannot modify the task list through its public view.
+     */
     @Test
     public void asList_modificationAttempt_exceptionThrown() {
         TaskList taskList = new TaskList(List.of(new ToDo("read book")));

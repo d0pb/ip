@@ -31,6 +31,11 @@ public class Event extends Task {
         this.to = to;
     }
 
+    /**
+     * Returns a readable representation of this event and its time range.
+     *
+     * @return formatted event for display
+     */
     @Override
     public String toString() {
         return "[E]" + super.toString()
@@ -38,6 +43,11 @@ public class Event extends Task {
                 + " to: " + Parser.formatDateTimeForDisplay(this.to) + ")";
     }
 
+    /**
+     * Converts this event into the text-file storage format.
+     *
+     * @return storage representation of this event
+     */
     @Override
     public String toStorageFormat() {
         String mark = this.isDone ? "1" : "0";
