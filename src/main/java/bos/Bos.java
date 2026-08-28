@@ -12,7 +12,7 @@ public class Bos {
     /**
      * Starts Bos and processes input until the user enters {@code bye}.
      *
-     * @param args command-line arguments, which are not used
+     * @param args command-line arguments, which are not used.
      */
     public static void main(String[] args) {
         Ui ui = new Ui();
@@ -24,7 +24,7 @@ public class Bos {
     /**
      * Stores ordinary input as tasks and displays stored tasks for {@code list}.
      *
-     * @param ui user interface used to read commands and show responses
+     * @param ui user interface used to read commands and show responses.
      */
     private static void processCommands(Ui ui) {
         TaskList tasks = new TaskList();
@@ -44,44 +44,42 @@ public class Bos {
             try {
                 CommandType commandType = Parser.parseCommandType(input);
                 switch (commandType) {
-                case BYE:
-                    saveTasksToFile(tasks, ui);
-                    return;
-                case LIST:
-                    ui.showTaskList(tasks.asList());
-                    break;
-                case MARK: {
-                    int taskIndex = Parser.parseTaskIndex(input, commandType, tasks.size());
-                    Task task = tasks.mark(taskIndex);
-                    saveTasksToFile(tasks, ui);
-                    ui.showTaskMarked(task);
-                    break;
-                }
-                case UNMARK: {
-                    int taskIndex = Parser.parseTaskIndex(input, commandType, tasks.size());
-                    Task task = tasks.unmark(taskIndex);
-                    saveTasksToFile(tasks, ui);
-                    ui.showTaskUnmarked(task);
-                    break;
-                }
-                case DELETE: {
-                    int taskIndex = Parser.parseTaskIndex(input, commandType, tasks.size());
-                    Task removedTask = tasks.delete(taskIndex);
-                    saveTasksToFile(tasks, ui);
-                    ui.showTaskDeleted(removedTask, tasks.size());
-                    break;
-                }
-                case TODO:
-                case DEADLINE:
-                case EVENT: {
-                    Task task = Parser.parseTask(input, commandType);
-                    tasks.add(task);
-                    saveTasksToFile(tasks, ui);
-                    ui.showTaskAdded(task, tasks.size());
-                    break;
-                }
-                case UNKNOWN:
-                    throw BosException.unknownCommand();
+                    case BYE:
+                        saveTasksToFile(tasks, ui);
+                        return;
+                    case LIST:
+                        ui.showTaskList(tasks.getTasks());
+                        break;
+                    case MARK: {
+                        int taskIndex = Parser.parseTaskIndex(input, commandType, tasks.getSize());
+                        Task task = tasks.mark(taskIndex);
+                        saveTasksToFile(tasks, ui);
+                        ui.showTaskMarked(task);
+                        break;
+                    }
+                    case UNMARK: {
+                        int taskIndex = Parser.parseTaskIndex(input, commandType, tasks.getSize());
+                        Task task = tasks.unmark(taskIndex);
+                        saveTasksToFile(tasks, ui);
+                        ui.showTaskUnmarked(task);
+                        break;
+                    }
+                    case DELETE: {
+                        int taskIndex = Parser.parseTaskIndex(input, commandType, tasks.getSize());
+                        Task removedTask = tasks.delete(taskIndex);
+                        saveTasksToFile(tasks, ui);
+                        ui.showTaskDeleted(removedTask, tasks.getSize());
+                        break;
+                    }
+                    case TODO, DEADLINE, EVENT: {
+                        Task task = Parser.parseTask(input, commandType);
+                        tasks.add(task);
+                        saveTasksToFile(tasks, ui);
+                        ui.showTaskAdded(task, tasks.getSize());
+                        break;
+                    }
+                    case UNKNOWN:
+                        throw BosException.createUnknownCommandException();
                 }
             } catch (BosException exception) {
                 ui.showError(exception.getMessage());
@@ -91,7 +89,6 @@ public class Bos {
         }
 
         saveTasksToFile(tasks, ui);
-
     }
 
     /**
@@ -99,7 +96,7 @@ public class Bos {
      */
     private static void saveTasksToFile(TaskList tasks, Ui ui) {
         try {
-            STORAGE.saveTasks(tasks.asList());
+            STORAGE.saveTasks(tasks.getTasks());
         } catch (IOException | SecurityException exception) {
             ui.showSavingError();
         }

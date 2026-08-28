@@ -10,7 +10,7 @@ public abstract class Task {
     /**
      * Creates an uncompleted task with the given description.
      *
-     * @param description description of the task
+     * @param description description of the task.
      */
     public Task(String description) {
         this.description = description;
@@ -20,7 +20,7 @@ public abstract class Task {
     /**
      * Returns the symbol used to display this task's completion status.
      *
-     * @return {@code X} if completed, or a space otherwise
+     * @return {@code X} if completed, or a space otherwise.
      */
     public String getStatusIcon() {
         return isDone ? "X" : " ";
@@ -48,7 +48,7 @@ public abstract class Task {
     /**
      * Converts this task into the text-file storage format.
      *
-     * @return storage representation of this task
+     * @return storage representation of this task.
      */
-    public abstract String toStorageFormat();
+    public abstract String formatForStorage();
 }
