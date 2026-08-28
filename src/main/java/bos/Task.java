@@ -40,6 +40,11 @@ public abstract class Task {
         isDone = false;
     }
 
+    /**
+     * Returns a readable representation containing the completion status and description.
+     *
+     * @return formatted task for display
+     */
     @Override
     public String toString() {
         return "[" + this.getStatusIcon() + "] " + description;
