@@ -1,6 +1,7 @@
 package bos;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.LocalDateTime;
 
@@ -10,6 +11,22 @@ import org.junit.jupiter.api.Test;
  * Tests the date-time parsing behavior of {@link Parser}.
  */
 public class ParserTest {
+
+    @Test
+    public void parseCommandType_findCommand_findReturned() {
+        assertEquals(CommandType.FIND, Parser.parseCommandType("find book"));
+    }
+
+    @Test
+    public void parseFindKeyword_validCommand_trimmedKeywordReturned() throws BosException {
+        assertEquals("read book", Parser.parseFindKeyword("find   read book  "));
+    }
+
+    @Test
+    public void parseFindKeyword_missingKeyword_exceptionThrown() {
+        assertThrows(BosException.class, () -> Parser.parseFindKeyword("find"));
+        assertThrows(BosException.class, () -> Parser.parseFindKeyword("find   "));
+    }
 
     @Test
     public void parseDateTime_validDateTime_localDateTimeReturned() {

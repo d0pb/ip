@@ -115,6 +115,25 @@ public class TaskListTest {
     }
 
     @Test
+    public void find_keywordInDescriptions_matchingTasksReturnedInOriginalOrder() {
+        Task firstMatch = new ToDo("read book");
+        Task nonMatch = new ToDo("buy groceries");
+        Task secondMatch = new Deadline("return BOOK", "June 6th");
+        TaskList taskList = new TaskList(List.of(firstMatch, nonMatch, secondMatch));
+
+        List<Task> matches = taskList.find("book");
+
+        assertIterableEquals(List.of(firstMatch, secondMatch), matches);
+    }
+
+    @Test
+    public void find_keywordAbsent_emptyListReturned() {
+        TaskList taskList = new TaskList(List.of(new ToDo("read book")));
+
+        assertEquals(List.of(), taskList.find("exercise"));
+    }
+
+    @Test
     public void asList_taskAddedAfterViewCreated_viewUpdated() {
         TaskList taskList = new TaskList();
         List<Task> taskView = taskList.asList();

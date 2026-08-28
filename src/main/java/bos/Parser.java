@@ -21,6 +21,7 @@ public final class Parser {
     private static final Pattern MARK_PATTERN = Pattern.compile("^mark\\s+(\\d+)\\s*$");
     private static final Pattern UNMARK_PATTERN = Pattern.compile("^unmark\\s+(\\d+)\\s*$");
     private static final Pattern DELETE_PATTERN = Pattern.compile("^delete\\s+(\\d+)\\s*$");
+    private static final Pattern FIND_PATTERN = Pattern.compile("^find\\s+(.*)$");
     private static final Pattern TODO_PATTERN = Pattern.compile("^todo\\s+(.*)$");
     private static final Pattern DEADLINE_PATTERN = Pattern.compile(
             "^deadline\\s*(?<title>.*?)\\s*/by\\s*(?<date>.*)$", Pattern.CASE_INSENSITIVE);
@@ -76,6 +77,21 @@ public final class Parser {
             throw BosException.taskNotFound();
         }
         return taskIndex;
+    }
+
+    /**
+     * Extracts the keyword from a find command.
+     *
+     * @param input complete find command
+     * @return trimmed keyword to search for
+     * @throws BosException if no keyword was provided
+     */
+    public static String parseFindKeyword(String input) throws BosException {
+        Matcher matcher = FIND_PATTERN.matcher(input);
+        if (!matcher.matches() || matcher.group(1).isBlank()) {
+            throw BosException.invalidFormat("find KEYWORD");
+        }
+        return matcher.group(1).trim();
     }
 
     /**
