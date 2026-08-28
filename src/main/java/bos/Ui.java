@@ -10,7 +10,8 @@ import java.util.Scanner;
  */
 public class Ui {
     private static final String INDENT = "     ";
-    private static final String DIVIDER = INDENT + "____________________________________________________________";
+    private static final String DIVIDER = INDENT
+            + "____________________________________________________________";
     private static final String BANNER = " ____            \n"
             + "| __ )  ___  ___ \n"
             + "|  _ \\ / _ \\/ __|\n"
@@ -30,8 +31,8 @@ public class Ui {
     /**
      * Creates a UI using the supplied streams.
      *
-     * @param input source of user commands
-     * @param output destination for user-facing messages
+     * @param input source of user commands.
+     * @param output destination for user-facing messages.
      */
     Ui(InputStream input, PrintStream output) {
         this.scanner = new Scanner(input);
@@ -41,7 +42,7 @@ public class Ui {
     /**
      * Returns whether another command is available to read.
      *
-     * @return true when another input line is available
+     * @return true when another input line is available.
      */
     public boolean hasNextCommand() {
         return scanner.hasNextLine();
@@ -50,7 +51,7 @@ public class Ui {
     /**
      * Reads the next command entered by the user.
      *
-     * @return the next line of input
+     * @return the next line of input.
      */
     public String readCommand() {
         return scanner.nextLine();
@@ -85,7 +86,7 @@ public class Ui {
     /**
      * Shows all tasks with their one-based list numbers.
      *
-     * @param tasks tasks to display
+     * @param tasks tasks to display.
      */
     public void showTaskList(List<Task> tasks) {
         output.println(INDENT + "Here are the tasks in your list:");
@@ -97,7 +98,7 @@ public class Ui {
     /**
      * Confirms that a task was marked as done.
      *
-     * @param task task that was marked
+     * @param task task that was marked.
      */
     public void showTaskMarked(Task task) {
         output.println(INDENT + "Nice! I've marked this task as done:");
@@ -107,7 +108,7 @@ public class Ui {
     /**
      * Confirms that a task was marked as not done.
      *
-     * @param task task that was unmarked
+     * @param task task that was unmarked.
      */
     public void showTaskUnmarked(Task task) {
         output.println(INDENT + "OK, I've marked this task as not done yet:");
@@ -117,8 +118,8 @@ public class Ui {
     /**
      * Confirms that a task was deleted and reports the remaining count.
      *
-     * @param task deleted task
-     * @param taskCount number of tasks remaining
+     * @param task deleted task.
+     * @param taskCount number of tasks remaining.
      */
     public void showTaskDeleted(Task task, int taskCount) {
         output.println(INDENT + "Noted. I've removed this task:");
@@ -129,8 +130,8 @@ public class Ui {
     /**
      * Confirms that a task was added and reports the new count.
      *
-     * @param task added task
-     * @param taskCount number of tasks after adding
+     * @param task added task.
+     * @param taskCount number of tasks after adding.
      */
     public void showTaskAdded(Task task, int taskCount) {
         output.println(INDENT + "Got it. I've added this task:");
@@ -141,7 +142,7 @@ public class Ui {
     /**
      * Shows an invalid-command error.
      *
-     * @param message explanation of the error
+     * @param message explanation of the error.
      */
     public void showError(String message) {
         output.println(INDENT + "OOPS!!! " + message);
@@ -150,7 +151,7 @@ public class Ui {
     /**
      * Warns that corrupted saved data could not be loaded.
      *
-     * @param message explanation of the corrupted data
+     * @param message explanation of the corrupted data.
      */
     public void showLoadingError(String message) {
         output.println("tasks.txt is corrupted (" + message + "), resetting...");

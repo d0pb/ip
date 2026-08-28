@@ -22,8 +22,8 @@ public class TaskListTest {
     public void constructor_noInitialTasks_emptyListCreated() {
         TaskList taskList = new TaskList();
 
-        assertEquals(0, taskList.size());
-        assertEquals(List.of(), taskList.asList());
+        assertEquals(0, taskList.getSize());
+        assertEquals(List.of(), taskList.getTasks());
     }
 
     /**
@@ -31,15 +31,15 @@ public class TaskListTest {
      */
     @Test
     public void constructor_initialTasks_sourceListChanged_taskListUnaffected() {
-        Task task = new ToDo("read book");
+        Task task = new TodoTask("read book");
         List<Task> initialTasks = new ArrayList<>();
         initialTasks.add(task);
         TaskList taskList = new TaskList(initialTasks);
 
         initialTasks.clear();
 
-        assertEquals(1, taskList.size());
-        assertSame(task, taskList.asList().get(0));
+        assertEquals(1, taskList.getSize());
+        assertSame(task, taskList.getTasks().get(0));
     }
 
     /**
@@ -47,14 +47,14 @@ public class TaskListTest {
      */
     @Test
     public void add_task_taskAppendedAndSizeIncreased() {
-        Task firstTask = new ToDo("read book");
-        Task secondTask = new ToDo("return book");
+        Task firstTask = new TodoTask("read book");
+        Task secondTask = new TodoTask("return book");
         TaskList taskList = new TaskList(List.of(firstTask));
 
         taskList.add(secondTask);
 
-        assertEquals(2, taskList.size());
-        assertIterableEquals(List.of(firstTask, secondTask), taskList.asList());
+        assertEquals(2, taskList.getSize());
+        assertIterableEquals(List.of(firstTask, secondTask), taskList.getTasks());
     }
 
     /**
@@ -62,16 +62,16 @@ public class TaskListTest {
      */
     @Test
     public void delete_validIndex_taskRemovedAndReturned() {
-        Task firstTask = new ToDo("read book");
-        Task taskToDelete = new ToDo("return book");
-        Task lastTask = new ToDo("buy book");
+        Task firstTask = new TodoTask("read book");
+        Task taskToDelete = new TodoTask("return book");
+        Task lastTask = new TodoTask("buy book");
         TaskList taskList = new TaskList(List.of(firstTask, taskToDelete, lastTask));
 
         Task deletedTask = taskList.delete(1);
 
         assertSame(taskToDelete, deletedTask);
-        assertEquals(2, taskList.size());
-        assertIterableEquals(List.of(firstTask, lastTask), taskList.asList());
+        assertEquals(2, taskList.getSize());
+        assertIterableEquals(List.of(firstTask, lastTask), taskList.getTasks());
     }
 
     /**
@@ -79,7 +79,7 @@ public class TaskListTest {
      */
     @Test
     public void delete_indexOutsideList_exceptionThrown() {
-        TaskList taskList = new TaskList(List.of(new ToDo("read book")));
+        TaskList taskList = new TaskList(List.of(new TodoTask("read book")));
 
         assertThrows(IndexOutOfBoundsException.class, () -> taskList.delete(-1));
         assertThrows(IndexOutOfBoundsException.class, () -> taskList.delete(1));
@@ -90,8 +90,8 @@ public class TaskListTest {
      */
     @Test
     public void mark_validIndex_selectedTaskMarkedAndReturned() {
-        Task taskToMark = new ToDo("read book");
-        Task otherTask = new ToDo("return book");
+        Task taskToMark = new TodoTask("read book");
+        Task otherTask = new TodoTask("return book");
         TaskList taskList = new TaskList(List.of(taskToMark, otherTask));
 
         Task markedTask = taskList.mark(0);
@@ -106,7 +106,7 @@ public class TaskListTest {
      */
     @Test
     public void mark_indexOutsideList_exceptionThrown() {
-        TaskList taskList = new TaskList(List.of(new ToDo("read book")));
+        TaskList taskList = new TaskList(List.of(new TodoTask("read book")));
 
         assertThrows(IndexOutOfBoundsException.class, () -> taskList.mark(-1));
         assertThrows(IndexOutOfBoundsException.class, () -> taskList.mark(1));
@@ -117,8 +117,8 @@ public class TaskListTest {
      */
     @Test
     public void unmark_validIndex_selectedTaskUnmarkedAndReturned() {
-        Task taskToUnmark = new ToDo("read book");
-        Task otherTask = new ToDo("return book");
+        Task taskToUnmark = new TodoTask("read book");
+        Task otherTask = new TodoTask("return book");
         taskToUnmark.markAsDone();
         otherTask.markAsDone();
         TaskList taskList = new TaskList(List.of(taskToUnmark, otherTask));
@@ -135,7 +135,7 @@ public class TaskListTest {
      */
     @Test
     public void unmark_indexOutsideList_exceptionThrown() {
-        TaskList taskList = new TaskList(List.of(new ToDo("read book")));
+        TaskList taskList = new TaskList(List.of(new TodoTask("read book")));
 
         assertThrows(IndexOutOfBoundsException.class, () -> taskList.unmark(-1));
         assertThrows(IndexOutOfBoundsException.class, () -> taskList.unmark(1));
@@ -145,10 +145,10 @@ public class TaskListTest {
      * Verifies that a previously obtained view reflects tasks added later.
      */
     @Test
-    public void asList_taskAddedAfterViewCreated_viewUpdated() {
+    public void getTasks_taskAddedAfterViewCreated_viewUpdated() {
         TaskList taskList = new TaskList();
-        List<Task> taskView = taskList.asList();
-        Task task = new ToDo("read book");
+        List<Task> taskView = taskList.getTasks();
+        Task task = new TodoTask("read book");
 
         taskList.add(task);
 
@@ -159,12 +159,12 @@ public class TaskListTest {
      * Verifies that callers cannot modify the task list through its public view.
      */
     @Test
-    public void asList_modificationAttempt_exceptionThrown() {
-        TaskList taskList = new TaskList(List.of(new ToDo("read book")));
-        List<Task> taskView = taskList.asList();
+    public void getTasks_modificationAttempt_exceptionThrown() {
+        TaskList taskList = new TaskList(List.of(new TodoTask("read book")));
+        List<Task> taskView = taskList.getTasks();
 
         assertThrows(UnsupportedOperationException.class,
-                () -> taskView.add(new ToDo("return book")));
+                () -> taskView.add(new TodoTask("return book")));
         assertThrows(UnsupportedOperationException.class, () -> taskView.remove(0));
     }
 }

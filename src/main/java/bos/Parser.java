@@ -34,8 +34,8 @@ public final class Parser {
     /**
      * Identifies the command keyword at the beginning of an input line.
      *
-     * @param input complete line entered by the user
-     * @return matching command type, or {@link CommandType#UNKNOWN} when there is no match
+     * @param input complete line entered by the user.
+     * @return matching command type, or {@link CommandType#UNKNOWN} when there is no match.
      */
     public static CommandType parseCommandType(String input) {
         for (CommandType commandType : CommandType.values()) {
@@ -51,29 +51,29 @@ public final class Parser {
     /**
      * Reads a one-based task number and converts it to a valid list index.
      *
-     * @param input complete mark, unmark, or delete command
-     * @param commandType type of task-number command being parsed
-     * @param taskCount number of tasks currently available
-     * @return zero-based index of the selected task
-     * @throws BosException if the number is invalid or does not identify a task
+     * @param input complete mark, unmark, or delete command.
+     * @param commandType type of task-number command being parsed.
+     * @param taskCount number of tasks currently available.
+     * @return zero-based index of the selected task.
+     * @throws BosException if the number is invalid or does not identify a task.
      */
     public static int parseTaskIndex(String input, CommandType commandType, int taskCount)
             throws BosException {
         Pattern pattern = getTaskIndexPattern(commandType);
         Matcher matcher = pattern.matcher(input);
         if (!matcher.matches()) {
-            throw BosException.invalidTaskNumber();
+            throw BosException.createInvalidTaskNumberException();
         }
 
         int taskIndex;
         try {
             taskIndex = Integer.parseInt(matcher.group(1)) - 1;
         } catch (NumberFormatException exception) {
-            throw BosException.invalidTaskNumber();
+            throw BosException.createInvalidTaskNumberException();
         }
 
         if (taskIndex < 0 || taskIndex >= taskCount) {
-            throw BosException.taskNotFound();
+            throw BosException.createTaskNotFoundException();
         }
         return taskIndex;
     }
@@ -81,17 +81,17 @@ public final class Parser {
     /**
      * Converts a task-creation command into the corresponding task.
      *
-     * @param input complete todo, deadline, or event command
-     * @param commandType type of task to create
-     * @return task described by the command
-     * @throws BosException if the command is incomplete or malformed
+     * @param input complete todo, deadline, or event command.
+     * @param commandType type of task to create.
+     * @return task described by the command.
+     * @throws BosException if the command is incomplete or malformed.
      */
     public static Task parseTask(String input, CommandType commandType) throws BosException {
         return switch (commandType) {
-        case TODO -> parseTodo(input);
-        case DEADLINE -> parseDeadline(input);
-        case EVENT -> parseEvent(input);
-        default -> throw new IllegalArgumentException(commandType + " is not a task-creation command");
+            case TODO -> parseTodo(input);
+            case DEADLINE -> parseDeadline(input);
+            case EVENT -> parseEvent(input);
+            default -> throw new IllegalArgumentException(commandType + " is not a task-creation command");
         };
     }
 
@@ -99,8 +99,8 @@ public final class Parser {
      * Converts a date-time in {@code yyyy-MM-dd HHmm} format into a
      * {@link LocalDateTime}. Text in any other format is retained unchanged.
      *
-     * @param text user-entered or stored date-time text
-     * @return a {@code LocalDateTime} when parsing succeeds, or the original string otherwise
+     * @param text user-entered or stored date-time text.
+     * @return a {@code LocalDateTime} when parsing succeeds, or the original string otherwise.
      */
     public static Object parseDateTime(String text) {
         try {
@@ -115,8 +115,8 @@ public final class Parser {
      * Plain text is returned unchanged so descriptions such as "tomorrow evening"
      * remain supported.
      *
-     * @param value parsed date-time or plain text
-     * @return value suitable for saving in the data file
+     * @param value parsed date-time or plain text.
+     * @return value suitable for saving in the data file.
      */
     public static String formatDateTimeForStorage(Object value) {
         if (value instanceof LocalDateTime dateTime) {
@@ -128,8 +128,8 @@ public final class Parser {
     /**
      * Formats a parsed date-time value for a readable chatbot response.
      *
-     * @param value parsed date-time or plain text
-     * @return readable date-time text
+     * @param value parsed date-time or plain text.
+     * @return readable date-time text.
      */
     public static String formatDateTimeForDisplay(Object value) {
         if (value instanceof LocalDateTime dateTime) {
@@ -143,10 +143,10 @@ public final class Parser {
      */
     private static Pattern getTaskIndexPattern(CommandType commandType) {
         return switch (commandType) {
-        case MARK -> MARK_PATTERN;
-        case UNMARK -> UNMARK_PATTERN;
-        case DELETE -> DELETE_PATTERN;
-        default -> throw new IllegalArgumentException(commandType + " does not use a task number");
+            case MARK -> MARK_PATTERN;
+            case UNMARK -> UNMARK_PATTERN;
+            case DELETE -> DELETE_PATTERN;
+            default -> throw new IllegalArgumentException(commandType + " does not use a task number");
         };
     }
 
@@ -156,12 +156,12 @@ public final class Parser {
     private static Task parseTodo(String input) throws BosException {
         Matcher matcher = TODO_PATTERN.matcher(input);
         if (!matcher.matches() || matcher.group(1).isBlank()) {
-            throw BosException.emptyDescription(CommandType.TODO);
+            throw BosException.createEmptyDescriptionException(CommandType.TODO);
         }
 
         String title = matcher.group(1).trim();
         validateStorageFields(title);
-        return new ToDo(title);
+        return new TodoTask(title);
     }
 
     /**
@@ -170,16 +170,16 @@ public final class Parser {
     private static Task parseDeadline(String input) throws BosException {
         Matcher matcher = DEADLINE_PATTERN.matcher(input);
         if (input.trim().equals(CommandType.DEADLINE.getKeyword())) {
-            throw BosException.emptyDescription(CommandType.DEADLINE);
+            throw BosException.createEmptyDescriptionException(CommandType.DEADLINE);
         }
         if (!matcher.matches()) {
-            throw BosException.invalidFormat("deadline DESCRIPTION /by DATE");
+            throw BosException.createInvalidFormatException("deadline DESCRIPTION /by DATE");
         }
         if (matcher.group("title").isBlank()) {
-            throw BosException.emptyDescription(CommandType.DEADLINE);
+            throw BosException.createEmptyDescriptionException(CommandType.DEADLINE);
         }
         if (matcher.group("date").isBlank()) {
-            throw BosException.invalidFormat("deadline DESCRIPTION /by DATE");
+            throw BosException.createInvalidFormatException("deadline DESCRIPTION /by DATE");
         }
 
         String title = matcher.group("title").trim();
@@ -195,25 +195,25 @@ public final class Parser {
     private static Task parseEvent(String input) throws BosException {
         Matcher matcher = EVENT_PATTERN.matcher(input);
         if (input.trim().equals(CommandType.EVENT.getKeyword())) {
-            throw BosException.emptyDescription(CommandType.EVENT);
+            throw BosException.createEmptyDescriptionException(CommandType.EVENT);
         }
         if (!matcher.matches()) {
-            throw BosException.invalidFormat("event DESCRIPTION /from START /to END");
+            throw BosException.createInvalidFormatException("event DESCRIPTION /from START /to END");
         }
         if (matcher.group("title").isBlank()) {
-            throw BosException.emptyDescription(CommandType.EVENT);
+            throw BosException.createEmptyDescriptionException(CommandType.EVENT);
         }
         if (matcher.group("from").isBlank() || matcher.group("to").isBlank()) {
-            throw BosException.invalidFormat("event DESCRIPTION /from START /to END");
+            throw BosException.createInvalidFormatException("event DESCRIPTION /from START /to END");
         }
 
         String title = matcher.group("title").trim();
-        String from = matcher.group("from").trim();
-        String to = matcher.group("to").trim();
-        validateStorageFields(title, from, to);
-        Object parsedFrom = parseDateTime(from);
-        Object parsedTo = parseDateTime(to);
-        return new Event(title, parsedFrom, parsedTo);
+        String startTime = matcher.group("from").trim();
+        String endTime = matcher.group("to").trim();
+        validateStorageFields(title, startTime, endTime);
+        Object parsedStartTime = parseDateTime(startTime);
+        Object parsedEndTime = parseDateTime(endTime);
+        return new Event(title, parsedStartTime, parsedEndTime);
     }
 
     /**

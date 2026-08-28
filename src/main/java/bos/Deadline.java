@@ -9,8 +9,8 @@ public class Deadline extends Task {
     /**
      * Creates a deadline, parsing date-times written as {@code yyyy-MM-dd HHmm}.
      *
-     * @param title task description
-     * @param deadline deadline date-time or free-form text
+     * @param title task description.
+     * @param deadline deadline date-time or free-form text.
      */
     public Deadline(String title, String deadline) {
         this(title, Parser.parseDateTime(deadline));
@@ -19,8 +19,8 @@ public class Deadline extends Task {
     /**
      * Creates a deadline from a value that has already been interpreted.
      *
-     * @param title task description
-     * @param deadline parsed date-time or free-form text
+     * @param title task description.
+     * @param deadline parsed date-time or free-form text.
      */
     Deadline(String title, Object deadline) {
         super(title);
@@ -44,7 +44,7 @@ public class Deadline extends Task {
      * @return storage representation of this deadline
      */
     @Override
-    public String toStorageFormat() {
+    public String formatForStorage() {
         String mark = this.isDone ? "1" : "0";
         return "D | " + mark + " | " + this.description + " | "
                 + Parser.formatDateTimeForStorage(this.deadline);

@@ -1,7 +1,7 @@
 package bos;
 
 /**
- * Represents a command that Bos can recognise.
+ * Represents a command that Bos can recognize.
  */
 public enum CommandType {
     BYE("bye"),
@@ -28,7 +28,7 @@ public enum CommandType {
     /**
      * Returns the word used to enter this command.
      *
-     * @return command keyword
+     * @return command keyword.
      */
     public String getKeyword() {
         return keyword;
