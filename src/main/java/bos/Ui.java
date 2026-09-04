@@ -2,7 +2,6 @@ package bos;
 
 import java.io.InputStream;
 import java.io.PrintStream;
-import java.util.List;
 import java.util.Scanner;
 
 /**
@@ -59,21 +58,23 @@ public class Ui {
 
     /**
      * Shows Bos's banner and welcome message.
+     *
+     * @param greeting greeting and any startup warning to show.
      */
-    public void showGreeting() {
+    public void showGreeting(String greeting) {
         output.println(DIVIDER);
         output.println(BANNER);
-        output.println(INDENT + "Hello! I'm Bos.");
-        output.println(INDENT + "What can I do for you?");
+        showResponse(greeting);
         output.println(DIVIDER);
     }
 
     /**
-     * Shows Bos's farewell message.
+     * Shows one response, indenting each line for the terminal layout.
+     *
+     * @param response text to show.
      */
-    public void showExit() {
-        output.println(INDENT + "Bye. Hope to see you again soon!");
-        output.println(DIVIDER);
+    public void showResponse(String response) {
+        output.println(INDENT + response.replace("\n", "\n" + INDENT));
     }
 
     /**
@@ -83,108 +84,4 @@ public class Ui {
         output.println(DIVIDER);
     }
 
-    /**
-     * Shows all tasks with their one-based list numbers.
-     *
-     * @param tasks tasks to display.
-     */
-    public void showTaskList(List<Task> tasks) {
-        output.println(INDENT + "Here are the tasks in your list:");
-        showNumberedTasks(tasks);
-    }
-
-    /**
-     * Shows tasks whose descriptions match a find keyword.
-     *
-     * @param tasks matching tasks to display.
-     */
-    public void showMatchingTasks(List<Task> tasks) {
-        output.println(INDENT + "Here are the matching tasks in your list:");
-        showNumberedTasks(tasks);
-    }
-
-    /**
-     * Shows tasks with one-based numbers relative to the supplied list.
-     */
-    private void showNumberedTasks(List<Task> tasks) {
-        for (int i = 0; i < tasks.size(); i++) {
-            output.println(INDENT + (i + 1) + "." + tasks.get(i));
-        }
-    }
-
-    /**
-     * Confirms that a task was marked as done.
-     *
-     * @param task task that was marked.
-     */
-    public void showTaskMarked(Task task) {
-        output.println(INDENT + "Nice! I've marked this task as done:");
-        output.println(INDENT + task);
-    }
-
-    /**
-     * Confirms that a task was marked as not done.
-     *
-     * @param task task that was unmarked.
-     */
-    public void showTaskUnmarked(Task task) {
-        output.println(INDENT + "OK, I've marked this task as not done yet:");
-        output.println(INDENT + task);
-    }
-
-    /**
-     * Confirms that a task was deleted and reports the remaining count.
-     *
-     * @param task deleted task.
-     * @param taskCount number of tasks remaining.
-     */
-    public void showTaskDeleted(Task task, int taskCount) {
-        output.println(INDENT + "Noted. I've removed this task:");
-        output.println(INDENT + "  " + task);
-        output.println(INDENT + "Now you have " + taskCount + " tasks in the list.");
-    }
-
-    /**
-     * Confirms that a task was added and reports the new count.
-     *
-     * @param task added task.
-     * @param taskCount number of tasks after adding.
-     */
-    public void showTaskAdded(Task task, int taskCount) {
-        output.println(INDENT + "Got it. I've added this task:");
-        output.println(INDENT + "  " + task);
-        output.println(INDENT + "Now you have " + taskCount + " tasks in the list.");
-    }
-
-    /**
-     * Shows an invalid-command error.
-     *
-     * @param message explanation of the error.
-     */
-    public void showError(String message) {
-        output.println(INDENT + "OOPS!!! " + message);
-    }
-
-    /**
-     * Warns that corrupted saved data could not be loaded.
-     *
-     * @param message explanation of the corrupted data.
-     */
-    public void showLoadingError(String message) {
-        output.println("tasks.txt is corrupted (" + message + "), resetting...");
-    }
-
-    /**
-     * Warns that the task file could not be accessed.
-     */
-    public void showFileAccessError() {
-        output.println("Cannot access the task file, recording from scratch...");
-    }
-
-    /**
-     * Warns that the current task list could not be saved.
-     */
-    public void showSavingError() {
-        showError("Unable to save tasks onto the hard disk.");
-    }
 }
