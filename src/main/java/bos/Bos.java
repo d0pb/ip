@@ -89,6 +89,7 @@ public class Bos {
                 case DELETE -> deleteTask(input, commandType);
                 case TODO, DEADLINE, EVENT -> addTask(input, commandType);
                 case UNKNOWN -> throw BosException.createUnknownCommandException();
+                default -> throw new IllegalStateException("Unhandled command type: " + commandType);
             };
         } catch (BosException exception) {
             return "OOPS!!! " + exception.getMessage();

@@ -61,5 +61,4 @@ public class BosException extends Exception {
     public static BosException createUnknownCommandException() {
         return new BosException("I'm sorry, but I don't know what that means :-(");
     }
-
 }

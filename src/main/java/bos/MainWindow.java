@@ -1,7 +1,6 @@
 package bos;
 
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
@@ -18,8 +17,6 @@ public class MainWindow extends AnchorPane {
     private VBox dialogContainer;
     @FXML
     private TextField userInput;
-    @FXML
-    private Button sendButton;
 
     private Bos bos;
 
@@ -41,7 +38,7 @@ public class MainWindow extends AnchorPane {
      */
     public void setBos(Bos bos) {
         this.bos = bos;
-        dialogContainer.getChildren().add(DialogBox.getBosDialog(bos.getGreeting(), bosImage));
+        dialogContainer.getChildren().add(DialogBox.createBosDialog(bos.getGreeting(), bosImage));
     }
 
     /**
@@ -53,8 +50,8 @@ public class MainWindow extends AnchorPane {
         String input = userInput.getText();
         String response = bos.getResponse(input);
         dialogContainer.getChildren().addAll(
-                DialogBox.getUserDialog(input, userImage),
-                DialogBox.getBosDialog(response, bosImage));
+                DialogBox.createUserDialog(input, userImage),
+                DialogBox.createBosDialog(response, bosImage));
         userInput.clear();
     }
 }
