@@ -20,7 +20,7 @@ import javafx.scene.layout.HBox;
  */
 public class DialogBox extends HBox {
     @FXML
-    private Label dialog;
+    private Label dialogText;
     @FXML
     private ImageView displayPicture;
 
@@ -34,14 +34,14 @@ public class DialogBox extends HBox {
             throw new IllegalStateException("Unable to load the dialog box layout", exception);
         }
 
-        dialog.setText(text);
+        dialogText.setText(text);
         displayPicture.setImage(image);
     }
 
     /**
-     * Flips the dialog box such that the ImageView is on the left and text on the right.
+     * Places the display picture on the left and the message text on the right.
      */
-    private void flip() {
+    private void placeDisplayPictureOnLeft() {
         ObservableList<Node> children = FXCollections.observableArrayList(getChildren());
         Collections.reverse(children);
         getChildren().setAll(children);
@@ -55,7 +55,7 @@ public class DialogBox extends HBox {
      * @param image user's display image.
      * @return dialog box with the user's image on the right.
      */
-    public static DialogBox getUserDialog(String text, Image image) {
+    public static DialogBox createUserDialog(String text, Image image) {
         return new DialogBox(text, image);
     }
 
@@ -66,9 +66,9 @@ public class DialogBox extends HBox {
      * @param image Bos's display image.
      * @return dialog box with Bos's image on the left.
      */
-    public static DialogBox getBosDialog(String text, Image image) {
+    public static DialogBox createBosDialog(String text, Image image) {
         DialogBox dialogBox = new DialogBox(text, image);
-        dialogBox.flip();
+        dialogBox.placeDisplayPictureOnLeft();
         return dialogBox;
     }
 }

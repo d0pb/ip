@@ -83,5 +83,4 @@ public class Ui {
     public void showDivider() {
         output.println(DIVIDER);
     }
-
 }

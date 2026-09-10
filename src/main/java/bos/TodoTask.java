@@ -4,13 +4,15 @@ package bos;
  * Represents a task without a deadline or scheduled time.
  */
 public class TodoTask extends Task {
+    static final String STORAGE_TYPE = "T";
+
     /**
      * Creates a todo task with the given description.
      *
-     * @param title task description.
+     * @param description task description.
      */
-    public TodoTask(String title) {
-        super(title);
+    public TodoTask(String description) {
+        super(description);
     }
 
     @Override
@@ -20,7 +22,6 @@ public class TodoTask extends Task {
 
     @Override
     public String formatForStorage() {
-        String mark = this.isDone ? "1" : "0";
-        return "T | " + mark + " | " + this.description;
+        return formatStorageFields(STORAGE_TYPE);
     }
 }

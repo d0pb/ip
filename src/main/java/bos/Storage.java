@@ -10,9 +10,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Loads tasks from a text file on the hard disk. Writes tasks to the text file.
+ * Loads tasks from and saves tasks to a text file on the hard disk.
  */
 public class Storage {
+    private static final int MINIMUM_FIELD_COUNT = 3;
+    private static final int TODO_FIELD_COUNT = 3;
+    private static final int DEADLINE_FIELD_COUNT = 4;
+    private static final int EVENT_FIELD_COUNT = 5;
+    private static final int TASK_TYPE_INDEX = 0;
+    private static final int STATUS_INDEX = 1;
+    private static final int DESCRIPTION_INDEX = 2;
+    private static final int DEADLINE_INDEX = 3;
+    private static final int EVENT_START_INDEX = 3;
+    private static final int EVENT_END_INDEX = 4;
     private final File taskFile;
 
     /**
@@ -92,63 +102,99 @@ public class Storage {
      * @throws BosException if the record has invalid or missing fields.
      */
     private Task parseTask(String line, int lineNumber) throws BosException {
-        String[] elements = line.split("\\|", -1);
-        if (elements.length < 3) {
-            throw createInvalidDataException(lineNumber, "too few fields");
-        }
+        String[] fields = line.split("\\|", -1);
+        validateCommonFields(fields, lineNumber);
 
-        String taskType = elements[0].trim();
-        String status = elements[1].trim();
-        String title = elements[2].trim();
-
-        if (!status.equals("0") && !status.equals("1")) {
-            throw createInvalidDataException(lineNumber, "status must be 0 or 1");
-        }
-        if (title.isBlank()) {
-            throw createInvalidDataException(lineNumber, "task description is empty");
-        }
-
-        Task task;
-        switch (taskType) {
-            case "T":
-                requireFieldCount(elements, 3, lineNumber);
-                task = new TodoTask(title);
-                break;
-            case "D":
-                requireFieldCount(elements, 4, lineNumber);
-                String deadline = elements[3].trim();
-                if (deadline.isBlank()) {
-                    throw createInvalidDataException(lineNumber, "deadline is empty");
-                }
-                task = new Deadline(title, deadline);
-                break;
-            case "E":
-                requireFieldCount(elements, 5, lineNumber);
-                String startTime = elements[3].trim();
-                String endTime = elements[4].trim();
-                if (startTime.isBlank() || endTime.isBlank()) {
-                    throw createInvalidDataException(lineNumber, "event time is empty");
-                }
-                task = new Event(title, startTime, endTime);
-                break;
-            default:
-                throw createInvalidDataException(lineNumber, "unknown task type");
-        }
-
-        if (status.equals("1")) {
+        Task task = createTask(fields, lineNumber);
+        String status = fields[STATUS_INDEX].trim();
+        if (status.equals(Task.COMPLETED_STORAGE_STATUS)) {
             task.markAsDone();
         }
         return task;
     }
 
     /**
+     * Validates the fields shared by every stored task.
+     */
+    private void validateCommonFields(String[] fields, int lineNumber) throws BosException {
+        if (fields.length < MINIMUM_FIELD_COUNT) {
+            throw createInvalidDataException(lineNumber, "too few fields");
+        }
+
+        String status = fields[STATUS_INDEX].trim();
+        boolean isRecognizedStatus = status.equals(Task.INCOMPLETE_STORAGE_STATUS)
+                || status.equals(Task.COMPLETED_STORAGE_STATUS);
+        if (!isRecognizedStatus) {
+            throw createInvalidDataException(lineNumber, "status must be 0 or 1");
+        }
+
+        getRequiredField(fields, DESCRIPTION_INDEX, lineNumber, "task description");
+    }
+
+    /**
+     * Creates the task represented by validated storage fields.
+     */
+    private Task createTask(String[] fields, int lineNumber) throws BosException {
+        String taskType = fields[TASK_TYPE_INDEX].trim();
+        String description = fields[DESCRIPTION_INDEX].trim();
+        return switch (taskType) {
+            case TodoTask.STORAGE_TYPE -> createTodoTask(fields, description, lineNumber);
+            case Deadline.STORAGE_TYPE -> createDeadlineTask(fields, description, lineNumber);
+            case Event.STORAGE_TYPE -> createEventTask(fields, description, lineNumber);
+            default -> throw createInvalidDataException(lineNumber, "unknown task type");
+        };
+    }
+
+    /**
+     * Creates a todo task from storage fields.
+     */
+    private Task createTodoTask(String[] fields, String description, int lineNumber)
+            throws BosException {
+        requireFieldCount(fields, TODO_FIELD_COUNT, lineNumber);
+        return new TodoTask(description);
+    }
+
+    /**
+     * Creates a deadline task from storage fields.
+     */
+    private Task createDeadlineTask(String[] fields, String description, int lineNumber)
+            throws BosException {
+        requireFieldCount(fields, DEADLINE_FIELD_COUNT, lineNumber);
+        String deadline = getRequiredField(fields, DEADLINE_INDEX, lineNumber, "deadline");
+        return new Deadline(description, deadline);
+    }
+
+    /**
+     * Creates an event task from storage fields.
+     */
+    private Task createEventTask(String[] fields, String description, int lineNumber)
+            throws BosException {
+        requireFieldCount(fields, EVENT_FIELD_COUNT, lineNumber);
+        String startTime = getRequiredField(fields, EVENT_START_INDEX, lineNumber, "event start time");
+        String endTime = getRequiredField(fields, EVENT_END_INDEX, lineNumber, "event end time");
+        return new Event(description, startTime, endTime);
+    }
+
+    /**
      * Checks that a record contains exactly the expected number of fields.
      */
-    private void requireFieldCount(String[] elements, int expectedCount, int lineNumber)
+    private void requireFieldCount(String[] fields, int expectedCount, int lineNumber)
             throws BosException {
-        if (elements.length != expectedCount) {
+        if (fields.length != expectedCount) {
             throw createInvalidDataException(lineNumber, "expected " + expectedCount + " fields");
         }
+    }
+
+    /**
+     * Returns a trimmed required field or reports that it is empty.
+     */
+    private String getRequiredField(String[] fields, int fieldIndex, int lineNumber, String fieldName)
+            throws BosException {
+        String field = fields[fieldIndex].trim();
+        if (field.isBlank()) {
+            throw createInvalidDataException(lineNumber, fieldName + " is empty");
+        }
+        return field;
     }
 
     /**
