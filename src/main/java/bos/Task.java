@@ -15,6 +15,9 @@ public abstract class Task {
      * @param description description of the task.
      */
     public Task(String description) {
+        assert description != null && !description.isBlank()
+                : "Task description must not be blank";
+
         this.description = description;
         this.isDone = false;
     }
@@ -49,6 +52,9 @@ public abstract class Task {
      * @return true when the keyword occurs in the description.
      */
     public boolean descriptionContains(String keyword) {
+        assert keyword != null && !keyword.isBlank()
+                : "Search keyword must not be blank";
+
         return description.toLowerCase(Locale.ROOT).contains(keyword.toLowerCase(Locale.ROOT));
     }
 

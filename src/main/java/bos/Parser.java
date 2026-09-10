@@ -76,6 +76,9 @@ public final class Parser {
         if (taskIndex < 0 || taskIndex >= taskCount) {
             throw BosException.createTaskNotFoundException();
         }
+
+        assert taskIndex >= 0 && taskIndex < taskCount
+                : "Parsed task index must identify an existing task";
         return taskIndex;
     }
 
@@ -135,6 +138,9 @@ public final class Parser {
      * @return value suitable for saving in the data file.
      */
     public static String formatDateTimeForStorage(Object value) {
+        assert value instanceof LocalDateTime || value instanceof String
+                : "Date-time value must be parsed or stored as text";
+
         if (value instanceof LocalDateTime dateTime) {
             return dateTime.format(DATE_TIME_FORMAT);
         }
@@ -148,6 +154,9 @@ public final class Parser {
      * @return readable date-time text.
      */
     public static String formatDateTimeForDisplay(Object value) {
+        assert value instanceof LocalDateTime || value instanceof String
+                : "Date-time value must be parsed or stored as text";
+
         if (value instanceof LocalDateTime dateTime) {
             return dateTime.format(DISPLAY_DATE_TIME_FORMAT);
         }

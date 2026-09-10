@@ -34,6 +34,9 @@ public class DialogBox extends HBox {
             throw new IllegalStateException("Unable to load the dialog box layout", exception);
         }
 
+        assert dialog != null && displayPicture != null
+                : "Dialog controls must be injected after loading the layout";
+
         dialog.setText(text);
         displayPicture.setImage(image);
     }

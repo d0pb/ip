@@ -76,6 +76,8 @@ public class Bos {
      * @return Bos's response to the command.
      */
     public String getResponse(String input) {
+        assert input != null : "Command input must not be null";
+
         try {
             CommandType commandType = Parser.parseCommandType(input);
             return switch (commandType) {
@@ -118,6 +120,11 @@ public class Bos {
      * Adds a task described by the command.
      */
     private String addTask(String input, CommandType commandType) throws BosException {
+        assert commandType == CommandType.TODO
+                || commandType == CommandType.DEADLINE
+                || commandType == CommandType.EVENT
+                : "addTask must receive a task-creation command";
+
         Task task = Parser.parseTask(input, commandType);
         tasks.add(task);
         String response = "Got it. I've added this task:\n  " + task
@@ -129,6 +136,8 @@ public class Bos {
      * Marks the task selected by the command.
      */
     private String markTask(String input, CommandType commandType) throws BosException {
+        assert commandType == CommandType.MARK : "markTask must receive a mark command";
+
         int taskIndex = Parser.parseTaskIndex(input, commandType, tasks.getSize());
         Task task = tasks.mark(taskIndex);
         return prependSavingError("Nice! I've marked this task as done:\n" + task);
@@ -138,6 +147,8 @@ public class Bos {
      * Unmarks the task selected by the command.
      */
     private String unmarkTask(String input, CommandType commandType) throws BosException {
+        assert commandType == CommandType.UNMARK : "unmarkTask must receive an unmark command";
+
         int taskIndex = Parser.parseTaskIndex(input, commandType, tasks.getSize());
         Task task = tasks.unmark(taskIndex);
         return prependSavingError("OK, I've marked this task as not done yet:\n" + task);
@@ -147,6 +158,8 @@ public class Bos {
      * Deletes the task selected by the command.
      */
     private String deleteTask(String input, CommandType commandType) throws BosException {
+        assert commandType == CommandType.DELETE : "deleteTask must receive a delete command";
+
         int taskIndex = Parser.parseTaskIndex(input, commandType, tasks.getSize());
         Task task = tasks.delete(taskIndex);
         String response = "Noted. I've removed this task:\n  " + task

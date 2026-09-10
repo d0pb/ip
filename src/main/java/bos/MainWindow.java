@@ -31,6 +31,10 @@ public class MainWindow extends AnchorPane {
      */
     @FXML
     public void initialize() {
+        assert scrollPane != null && dialogContainer != null
+                && userInput != null && sendButton != null
+                : "Main window controls must be injected before initialization";
+
         scrollPane.vvalueProperty().bind(dialogContainer.heightProperty());
     }
 
@@ -50,6 +54,8 @@ public class MainWindow extends AnchorPane {
      */
     @FXML
     private void handleUserInput() {
+        assert bos != null : "Bos must be configured before handling input";
+
         String input = userInput.getText();
         String response = bos.getResponse(input);
         dialogContainer.getChildren().addAll(
