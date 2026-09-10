@@ -1,13 +1,18 @@
 package bos;
 
 import java.util.Locale;
+import java.util.StringJoiner;
 
 /**
  * Represents a task with a description and completion status.
  */
 public abstract class Task {
-    protected String description;
-    protected boolean isDone;
+    static final String COMPLETED_STORAGE_STATUS = "1";
+    static final String INCOMPLETE_STORAGE_STATUS = "0";
+    private static final String STORAGE_FIELD_DELIMITER = " | ";
+
+    private final String description;
+    private boolean isDone;
 
     /**
      * Creates an uncompleted task with the given description.
@@ -56,6 +61,23 @@ public abstract class Task {
                 : "Search keyword must not be blank";
 
         return description.toLowerCase(Locale.ROOT).contains(keyword.toLowerCase(Locale.ROOT));
+    }
+
+    /**
+     * Formats the fields shared by every stored task, followed by any type-specific fields.
+     *
+     * @param taskType storage identifier for the task type.
+     * @param additionalFields type-specific fields to append.
+     * @return task fields joined using the storage delimiter.
+     */
+    protected String formatStorageFields(String taskType, String... additionalFields) {
+        String storageStatus = isDone ? COMPLETED_STORAGE_STATUS : INCOMPLETE_STORAGE_STATUS;
+        StringJoiner fields = new StringJoiner(STORAGE_FIELD_DELIMITER);
+        fields.add(taskType).add(storageStatus).add(description);
+        for (String field : additionalFields) {
+            fields.add(field);
+        }
+        return fields.toString();
     }
 
     /**

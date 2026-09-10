@@ -3,7 +3,7 @@ package bos;
 import javafx.application.Application;
 
 /**
- * A launcher class to workaround classpath issues.
+ * Launches the application while working around JavaFX classpath issues.
  */
 public class Launcher {
     /**

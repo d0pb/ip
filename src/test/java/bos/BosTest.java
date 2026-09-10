@@ -16,9 +16,6 @@ public class BosTest {
     @TempDir
     private Path temporaryDirectory;
 
-    /**
-     * Verifies that tasks added through a response are available to later commands.
-     */
     @Test
     public void getResponse_addThenList_addedTaskDisplayed() {
         Bos bos = new Bos(temporaryDirectory.resolve("tasks.txt").toString());
@@ -30,9 +27,6 @@ public class BosTest {
         assertEquals("Here are the tasks in your list:\n1.[T][ ] read book", listResponse);
     }
 
-    /**
-     * Verifies that a new chatbot instance reloads tasks saved by an earlier instance.
-     */
     @Test
     public void constructor_savedTaskExists_taskLoaded() {
         String filePath = temporaryDirectory.resolve("tasks.txt").toString();
@@ -44,9 +38,6 @@ public class BosTest {
         assertTrue(reloadedBos.getResponse("list").contains("submit report"));
     }
 
-    /**
-     * Verifies that invalid commands are converted into a response for the GUI.
-     */
     @Test
     public void getResponse_unknownCommand_errorResponseReturned() {
         Bos bos = new Bos(temporaryDirectory.resolve("tasks.txt").toString());

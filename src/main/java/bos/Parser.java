@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.format.ResolverStyle;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -11,22 +12,24 @@ import java.util.regex.Pattern;
  * Interprets user input and converts it into values that Bos can execute.
  */
 public final class Parser {
+    private static final String DEADLINE_COMMAND_FORMAT = "deadline DESCRIPTION /by DATE";
+    private static final String EVENT_COMMAND_FORMAT = "event DESCRIPTION /from START /to END";
     private static final String DATE_TIME_PATTERN = "uuuu-MM-dd HHmm";
     private static final String DISPLAY_DATE_TIME_PATTERN = "MMM d uuuu, h:mm a";
     private static final DateTimeFormatter DATE_TIME_FORMAT =
             DateTimeFormatter.ofPattern(DATE_TIME_PATTERN)
                     .withResolverStyle(ResolverStyle.STRICT);
     private static final DateTimeFormatter DISPLAY_DATE_TIME_FORMAT =
-            DateTimeFormatter.ofPattern(DISPLAY_DATE_TIME_PATTERN);
+            DateTimeFormatter.ofPattern(DISPLAY_DATE_TIME_PATTERN, Locale.ENGLISH);
     private static final Pattern MARK_PATTERN = Pattern.compile("^mark\\s+(\\d+)\\s*$");
     private static final Pattern UNMARK_PATTERN = Pattern.compile("^unmark\\s+(\\d+)\\s*$");
     private static final Pattern DELETE_PATTERN = Pattern.compile("^delete\\s+(\\d+)\\s*$");
     private static final Pattern FIND_PATTERN = Pattern.compile("^find\\s+(.*)$");
     private static final Pattern TODO_PATTERN = Pattern.compile("^todo\\s+(.*)$");
     private static final Pattern DEADLINE_PATTERN = Pattern.compile(
-            "^deadline\\s*(?<title>.*?)\\s*/by\\s*(?<date>.*)$", Pattern.CASE_INSENSITIVE);
+            "^deadline\\s*(?<description>.*?)\\s*/by\\s*(?<date>.*)$", Pattern.CASE_INSENSITIVE);
     private static final Pattern EVENT_PATTERN = Pattern.compile(
-            "^event\\s*(?<title>.*?)\\s*/from\\s*(?<from>.*?)\\s*/to\\s*(?<to>.*)$",
+            "^event\\s*(?<description>.*?)\\s*/from\\s*(?<from>.*?)\\s*/to\\s*(?<to>.*)$",
             Pattern.CASE_INSENSITIVE);
 
     private Parser() {
@@ -115,52 +118,19 @@ public final class Parser {
     }
 
     /**
-     * Converts a date-time in {@code yyyy-MM-dd HHmm} format into a
-     * {@link LocalDateTime}. Text in any other format is retained unchanged.
+     * Formats a date-time written as {@code yyyy-MM-dd HHmm} for display.
+     * Text in any other format is retained unchanged.
      *
      * @param text user-entered or stored date-time text.
-     * @return a {@code LocalDateTime} when parsing succeeds, or the original string otherwise.
+     * @return readable date-time text.
      */
-    public static Object parseDateTime(String text) {
+    public static String formatDateTimeForDisplay(String text) {
         try {
-            return LocalDateTime.parse(text, DATE_TIME_FORMAT);
+            LocalDateTime dateTime = LocalDateTime.parse(text, DATE_TIME_FORMAT);
+            return dateTime.format(DISPLAY_DATE_TIME_FORMAT);
         } catch (DateTimeParseException exception) {
             return text;
         }
-    }
-
-    /**
-     * Converts a date-time value to the consistent format used in {@code tasks.txt}.
-     * Plain text is returned unchanged so descriptions such as "tomorrow evening"
-     * remain supported.
-     *
-     * @param value parsed date-time or plain text.
-     * @return value suitable for saving in the data file.
-     */
-    public static String formatDateTimeForStorage(Object value) {
-        assert value instanceof LocalDateTime || value instanceof String
-                : "Date-time value must be parsed or stored as text";
-
-        if (value instanceof LocalDateTime dateTime) {
-            return dateTime.format(DATE_TIME_FORMAT);
-        }
-        return value.toString();
-    }
-
-    /**
-     * Formats a parsed date-time value for a readable chatbot response.
-     *
-     * @param value parsed date-time or plain text.
-     * @return readable date-time text.
-     */
-    public static String formatDateTimeForDisplay(Object value) {
-        assert value instanceof LocalDateTime || value instanceof String
-                : "Date-time value must be parsed or stored as text";
-
-        if (value instanceof LocalDateTime dateTime) {
-            return dateTime.format(DISPLAY_DATE_TIME_FORMAT);
-        }
-        return value.toString();
     }
 
     /**
@@ -184,9 +154,9 @@ public final class Parser {
             throw BosException.createEmptyDescriptionException(CommandType.TODO);
         }
 
-        String title = matcher.group(1).trim();
-        validateStorageFields(title);
-        return new TodoTask(title);
+        String description = matcher.group(1).trim();
+        validateStorageFields(description);
+        return new TodoTask(description);
     }
 
     /**
@@ -198,20 +168,19 @@ public final class Parser {
             throw BosException.createEmptyDescriptionException(CommandType.DEADLINE);
         }
         if (!matcher.matches()) {
-            throw BosException.createInvalidFormatException("deadline DESCRIPTION /by DATE");
+            throw BosException.createInvalidFormatException(DEADLINE_COMMAND_FORMAT);
         }
-        if (matcher.group("title").isBlank()) {
+        if (matcher.group("description").isBlank()) {
             throw BosException.createEmptyDescriptionException(CommandType.DEADLINE);
         }
         if (matcher.group("date").isBlank()) {
-            throw BosException.createInvalidFormatException("deadline DESCRIPTION /by DATE");
+            throw BosException.createInvalidFormatException(DEADLINE_COMMAND_FORMAT);
         }
 
-        String title = matcher.group("title").trim();
-        String date = matcher.group("date").trim();
-        validateStorageFields(title, date);
-        Object parsedDate = parseDateTime(date);
-        return new Deadline(title, parsedDate);
+        String description = matcher.group("description").trim();
+        String deadline = matcher.group("date").trim();
+        validateStorageFields(description, deadline);
+        return new Deadline(description, deadline);
     }
 
     /**
@@ -223,22 +192,20 @@ public final class Parser {
             throw BosException.createEmptyDescriptionException(CommandType.EVENT);
         }
         if (!matcher.matches()) {
-            throw BosException.createInvalidFormatException("event DESCRIPTION /from START /to END");
+            throw BosException.createInvalidFormatException(EVENT_COMMAND_FORMAT);
         }
-        if (matcher.group("title").isBlank()) {
+        if (matcher.group("description").isBlank()) {
             throw BosException.createEmptyDescriptionException(CommandType.EVENT);
         }
         if (matcher.group("from").isBlank() || matcher.group("to").isBlank()) {
-            throw BosException.createInvalidFormatException("event DESCRIPTION /from START /to END");
+            throw BosException.createInvalidFormatException(EVENT_COMMAND_FORMAT);
         }
 
-        String title = matcher.group("title").trim();
+        String description = matcher.group("description").trim();
         String startTime = matcher.group("from").trim();
         String endTime = matcher.group("to").trim();
-        validateStorageFields(title, startTime, endTime);
-        Object parsedStartTime = parseDateTime(startTime);
-        Object parsedEndTime = parseDateTime(endTime);
-        return new Event(title, parsedStartTime, parsedEndTime);
+        validateStorageFields(description, startTime, endTime);
+        return new Event(description, startTime, endTime);
     }
 
     /**
