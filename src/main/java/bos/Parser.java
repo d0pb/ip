@@ -79,6 +79,9 @@ public final class Parser {
         if (taskIndex < 0 || taskIndex >= taskCount) {
             throw BosException.createTaskNotFoundException();
         }
+
+        assert taskIndex >= 0 && taskIndex < taskCount
+                : "Parsed task index must identify an existing task";
         return taskIndex;
     }
 
