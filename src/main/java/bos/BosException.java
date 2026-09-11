@@ -54,6 +54,15 @@ public class BosException extends Exception {
     }
 
     /**
+     * Creates an error for a task whose description matches an existing task.
+     *
+     * @return exception describing the duplicate task.
+     */
+    public static BosException createDuplicateTaskException() {
+        return new BosException("This task already exists in the task list.");
+    }
+
+    /**
      * Creates an error for an unrecognized command.
      *
      * @return exception describing the unknown command.

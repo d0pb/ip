@@ -127,7 +127,10 @@ public class Bos {
                 : "addTask must receive a task-creation command";
 
         Task task = Parser.parseTask(input, commandType);
-        tasks.add(task);
+        if (!tasks.add(task)) {
+            throw BosException.createDuplicateTaskException();
+        }
+
         String response = "Got it. I've added this task:\n  " + task
                 + "\nNow you have " + tasks.getSize() + " tasks in the list.";
         return prependSavingError(response);

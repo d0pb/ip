@@ -64,6 +64,17 @@ public abstract class Task {
     }
 
     /**
+     * Checks whether another task has the same description.
+     * Task type, completion status, and scheduling details are excluded from the comparison.
+     *
+     * @param other task to compare with.
+     * @return true when both tasks have the same description.
+     */
+    public boolean hasSameDescription(Task other) {
+        return other != null && description.equals(other.description);
+    }
+
+    /**
      * Formats the fields shared by every stored task, followed by any type-specific fields.
      *
      * @param taskType storage identifier for the task type.

@@ -28,6 +28,24 @@ public class BosTest {
     }
 
     @Test
+    public void getResponse_addSameDescriptionWithDifferentTypeAndDuration_duplicatesRejected() {
+        Bos bos = new Bos(temporaryDirectory.resolve("tasks.txt").toString());
+        bos.getResponse("event meeting /from 2026-09-11 1000 /to 2026-09-11 1100");
+
+        String differentTypeResponse = bos.getResponse("todo meeting");
+        String differentDurationResponse = bos.getResponse(
+                "event meeting /from 2026-09-12 1400 /to 2026-09-12 1600");
+        String listResponse = bos.getResponse("list");
+
+        assertEquals("OOPS!!! This task already exists in the task list.", differentTypeResponse);
+        assertEquals("OOPS!!! This task already exists in the task list.", differentDurationResponse);
+        assertEquals(
+                "Here are the tasks in your list:\n"
+                        + "1.[E][ ] meeting (from: Sep 11 2026, 10:00 AM to: Sep 11 2026, 11:00 AM)",
+                listResponse);
+    }
+
+    @Test
     public void constructor_savedTaskExists_taskLoaded() {
         String filePath = temporaryDirectory.resolve("tasks.txt").toString();
         Bos firstBos = new Bos(filePath);

@@ -1,9 +1,11 @@
 package bos;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,10 +44,58 @@ public class TaskListTest {
         Task secondTask = new TodoTask("return book");
         TaskList taskList = new TaskList(List.of(firstTask));
 
-        taskList.add(secondTask);
+        boolean isAdded = taskList.add(secondTask);
 
+        assertTrue(isAdded);
         assertEquals(2, taskList.getSize());
         assertIterableEquals(List.of(firstTask, secondTask), taskList.getTasks());
+    }
+
+    @Test
+    public void add_sameDescriptionWithDifferentType_duplicateRejected() {
+        Task existingTask = new Deadline("return book", "Friday");
+        Task duplicateTask = new Event("return book", "1000", "1100");
+        duplicateTask.markAsDone();
+        TaskList taskList = new TaskList(List.of(existingTask));
+
+        boolean isAdded = taskList.add(duplicateTask);
+
+        assertFalse(isAdded);
+        assertEquals(1, taskList.getSize());
+        assertSame(existingTask, taskList.getTasks().get(0));
+    }
+
+    @Test
+    public void add_sameDescriptionWithDifferentDuration_duplicateRejected() {
+        Task existingTask = new Event("meeting", "1000", "1100");
+        TaskList taskList = new TaskList(List.of(existingTask));
+
+        boolean isAdded = taskList.add(new Event("meeting", "1400", "1600"));
+
+        assertFalse(isAdded);
+        assertEquals(1, taskList.getSize());
+        assertSame(existingTask, taskList.getTasks().get(0));
+    }
+
+    @Test
+    public void add_differentDescription_taskAdded() {
+        TaskList taskList = new TaskList(List.of(new TodoTask("read book")));
+
+        boolean isAdded = taskList.add(new Deadline("return book", "Friday"));
+
+        assertTrue(isAdded);
+        assertEquals(2, taskList.getSize());
+    }
+
+    @Test
+    public void constructor_duplicateInitialTasks_onlyFirstTaskRetained() {
+        Task firstTask = new Event("meeting", "1000", "1100");
+        Task duplicateTask = new Deadline("meeting", "Friday");
+
+        TaskList taskList = new TaskList(List.of(firstTask, duplicateTask));
+
+        assertEquals(1, taskList.getSize());
+        assertSame(firstTask, taskList.getTasks().get(0));
     }
 
     @Test

@@ -26,16 +26,25 @@ public class TaskList {
      * @param tasks initial tasks.
      */
     public TaskList(List<Task> tasks) {
-        this.tasks = new ArrayList<>(tasks);
+        this.tasks = new ArrayList<>();
+        for (Task task : tasks) {
+            add(task);
+        }
     }
 
     /**
-     * Adds a task to the end of the list.
+     * Adds a task to the end of the list unless a task with the same description already exists.
      *
      * @param task task to add.
+     * @return true if the task was added, or false if it was a duplicate.
      */
-    public void add(Task task) {
+    public boolean add(Task task) {
+        if (tasks.stream().anyMatch(existingTask -> existingTask.hasSameDescription(task))) {
+            return false;
+        }
+
         tasks.add(task);
+        return true;
     }
 
     /**
