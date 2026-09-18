@@ -12,6 +12,9 @@ import javafx.stage.Stage;
  * Starts the JavaFX GUI for Bos using an FXML layout.
  */
 public class Main extends Application {
+    private static final double MINIMUM_WINDOW_WIDTH = 380;
+    private static final double MINIMUM_WINDOW_HEIGHT = 520;
+
     private final Bos bos = new Bos();
 
     @Override
@@ -23,6 +26,9 @@ public class Main extends Application {
         fxmlLoader.<MainWindow>getController().setBos(bos);
         stage.setTitle("Bos");
         stage.setScene(scene);
+        stage.setMinWidth(MINIMUM_WINDOW_WIDTH);
+        stage.setMinHeight(MINIMUM_WINDOW_HEIGHT);
+        stage.setResizable(true);
         stage.show();
     }
 }

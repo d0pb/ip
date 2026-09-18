@@ -19,6 +19,9 @@ import javafx.scene.layout.HBox;
  * and a label containing text from the speaker.
  */
 public class DialogBox extends HBox {
+    private static final String USER_DIALOG_STYLE_CLASS = "user-dialog";
+    private static final String BOS_DIALOG_STYLE_CLASS = "bos-dialog";
+
     @FXML
     private Label dialogText;
     @FXML
@@ -59,7 +62,9 @@ public class DialogBox extends HBox {
      * @return dialog box with the user's image on the right.
      */
     public static DialogBox createUserDialog(String text, Image image) {
-        return new DialogBox(text, image);
+        DialogBox dialogBox = new DialogBox(text, image);
+        dialogBox.getStyleClass().add(USER_DIALOG_STYLE_CLASS);
+        return dialogBox;
     }
 
     /**
@@ -71,6 +76,7 @@ public class DialogBox extends HBox {
      */
     public static DialogBox createBosDialog(String text, Image image) {
         DialogBox dialogBox = new DialogBox(text, image);
+        dialogBox.getStyleClass().add(BOS_DIALOG_STYLE_CLASS);
         dialogBox.placeDisplayPictureOnLeft();
         return dialogBox;
     }
