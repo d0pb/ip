@@ -64,14 +64,20 @@ public abstract class Task {
     }
 
     /**
-     * Checks whether another task has the same description.
+     * Checks whether another task has the same description, ignoring case and repeated whitespace.
      * Task type, completion status, and scheduling details are excluded from the comparison.
      *
      * @param other task to compare with.
      * @return true when both tasks have the same description.
      */
     public boolean hasSameDescription(Task other) {
-        return other != null && description.equals(other.description);
+        if (other == null) {
+            return false;
+        }
+
+        String normalizedDescription = description.strip().replaceAll("\\s+", " ");
+        String normalizedOtherDescription = other.description.strip().replaceAll("\\s+", " ");
+        return normalizedDescription.equalsIgnoreCase(normalizedOtherDescription);
     }
 
     /**

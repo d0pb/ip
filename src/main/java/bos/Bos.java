@@ -14,6 +14,7 @@ public class Bos {
     private final Storage storage;
     private final TaskList tasks;
     private final String loadingMessage;
+    private final boolean isSavingEnabled;
 
     /**
      * Creates Bos using the default task storage file.
@@ -32,17 +33,24 @@ public class Bos {
 
         TaskList loadedTasks;
         String loadResult = "";
+        boolean canSaveTasks;
         try {
             loadedTasks = new TaskList(storage.loadTasks());
+            canSaveTasks = true;
         } catch (BosException exception) {
             loadedTasks = new TaskList();
-            loadResult = "tasks.txt is corrupted (" + exception.getMessage() + "), resetting...";
+            canSaveTasks = false;
+            loadResult = "The saved task file is corrupted (" + exception.getMessage()
+                    + "). It has not been overwritten, and changes cannot be saved this session.";
         } catch (IOException | SecurityException exception) {
             loadedTasks = new TaskList();
-            loadResult = "Cannot access the task file, recording from scratch...";
+            canSaveTasks = false;
+            loadResult = "The saved task file cannot be accessed. It has not been overwritten, "
+                    + "and changes cannot be saved this session.";
         }
         tasks = loadedTasks;
         loadingMessage = loadResult;
+        isSavingEnabled = canSaveTasks;
     }
 
     /**
@@ -76,13 +84,21 @@ public class Bos {
      * @return Bos's response to the command.
      */
     public String getResponse(String input) {
-        assert input != null : "Command input must not be null";
-
         try {
+            if (input == null || input.isBlank()) {
+                throw BosException.createEmptyCommandException();
+            }
+
             CommandType commandType = Parser.parseCommandType(input);
             return switch (commandType) {
-                case BYE -> prependSavingError(FAREWELL);
-                case LIST -> formatTaskList("Here are the tasks in your list:", tasks.getTasks());
+                case BYE -> {
+                    Parser.validateNoArguments(input, commandType);
+                    yield prependSavingError(FAREWELL);
+                }
+                case LIST -> {
+                    Parser.validateNoArguments(input, commandType);
+                    yield formatTaskList("Here are the tasks in your list:", tasks.getTasks());
+                }
                 case FIND -> formatTaskList(
                         "Here are the matching tasks in your list:",
                         tasks.find(Parser.parseFindKeyword(input)));
@@ -108,7 +124,7 @@ public class Bos {
             ui.showResponse(bos.getResponse(input));
             ui.showDivider();
 
-            if (Parser.parseCommandType(input) == CommandType.BYE) {
+            if (Parser.isExactCommand(input, CommandType.BYE)) {
                 return;
             }
         }
@@ -189,6 +205,11 @@ public class Bos {
      * Saves all tasks and prepends a warning to the response if saving fails.
      */
     private String prependSavingError(String response) {
+        if (!isSavingEnabled) {
+            return "OOPS!!! Changes cannot be saved because the task file was not loaded safely.\n"
+                    + response;
+        }
+
         try {
             storage.saveTasks(tasks.getTasks());
             return response;

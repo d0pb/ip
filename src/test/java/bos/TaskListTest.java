@@ -78,6 +78,18 @@ public class TaskListTest {
     }
 
     @Test
+    public void add_sameDescriptionWithDifferentCaseAndSpacing_duplicateRejected() {
+        Task existingTask = new TodoTask("Read   Book");
+        TaskList taskList = new TaskList(List.of(existingTask));
+
+        boolean isAdded = taskList.add(new Deadline("read book", "Friday"));
+
+        assertFalse(isAdded);
+        assertEquals(1, taskList.getSize());
+        assertSame(existingTask, taskList.getTasks().get(0));
+    }
+
+    @Test
     public void add_differentDescription_taskAdded() {
         TaskList taskList = new TaskList(List.of(new TodoTask("read book")));
 

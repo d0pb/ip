@@ -13,8 +13,8 @@ public class Event extends Task {
      * Creates an event with the given description and time range.
      *
      * @param description event description.
-     * @param startTime event start date-time or free-form text.
-     * @param endTime event end date-time or free-form text.
+     * @param startTime event start date-time text.
+     * @param endTime event end date-time text.
      */
     public Event(String description, String startTime, String endTime) {
         super(description);

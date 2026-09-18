@@ -12,7 +12,7 @@ public class Deadline extends Task {
      * Creates a deadline with the given description and due time.
      *
      * @param description task description.
-     * @param deadline deadline date-time or free-form text.
+     * @param deadline deadline date-time text.
      */
     public Deadline(String description, String deadline) {
         super(description);

@@ -2,10 +2,13 @@ package bos;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,7 +26,7 @@ public class Storage {
     private static final int DEADLINE_INDEX = 3;
     private static final int EVENT_START_INDEX = 3;
     private static final int EVENT_END_INDEX = 4;
-    private final File taskFile;
+    private final Path taskFile;
 
     /**
      * Creates storage that uses the file at the given path.
@@ -31,7 +34,7 @@ public class Storage {
      * @param filePath path of the task data file.
      */
     public Storage(String filePath) {
-        this.taskFile = new File(filePath);
+        this.taskFile = Path.of(filePath).toAbsolutePath().normalize();
     }
 
     /**
@@ -48,12 +51,18 @@ public class Storage {
         createFileIfMissing();
         ArrayList<Task> tasks = new ArrayList<>();
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(taskFile))) {
+        try (BufferedReader reader = Files.newBufferedReader(taskFile, StandardCharsets.UTF_8)) {
             String line;
             int lineNumber = 0;
             while ((line = reader.readLine()) != null) {
                 lineNumber++;
-                tasks.add(parseTask(line, lineNumber));
+                Task task = parseTask(line, lineNumber);
+                boolean isDuplicate = tasks.stream()
+                        .anyMatch(existingTask -> existingTask.hasSameDescription(task));
+                if (isDuplicate) {
+                    throw createInvalidDataException(lineNumber, "duplicate task description");
+                }
+                tasks.add(task);
             }
         }
 
@@ -68,11 +77,27 @@ public class Storage {
      */
     public void saveTasks(List<Task> tasks) throws IOException {
         createFileIfMissing();
+        Path parentDirectory = taskFile.getParent();
+        Path temporaryFile = Files.createTempFile(
+                parentDirectory,
+                taskFile.getFileName().toString() + ".",
+                ".tmp");
+        boolean isMoved = false;
 
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(taskFile))) {
-            for (Task task : tasks) {
-                writer.write(task.formatForStorage());
-                writer.newLine();
+        try {
+            try (BufferedWriter writer = Files.newBufferedWriter(
+                    temporaryFile,
+                    StandardCharsets.UTF_8)) {
+                for (Task task : tasks) {
+                    writer.write(task.formatForStorage());
+                    writer.newLine();
+                }
+            }
+            moveIntoPlace(temporaryFile);
+            isMoved = true;
+        } finally {
+            if (!isMoved) {
+                Files.deleteIfExists(temporaryFile);
             }
         }
     }
@@ -81,15 +106,36 @@ public class Storage {
      * Creates the parent directory and data file when they do not exist.
      */
     private void createFileIfMissing() throws IOException {
-        File parentDirectory = taskFile.getParentFile();
-        if (parentDirectory != null
-                && !parentDirectory.exists()
-                && !parentDirectory.mkdirs()) {
-            throw new IOException("Cannot create directory: " + parentDirectory);
+        Path parentDirectory = taskFile.getParent();
+        if (parentDirectory != null) {
+            Files.createDirectories(parentDirectory);
         }
 
-        if (!taskFile.exists()) {
-            taskFile.createNewFile();
+        if (Files.exists(taskFile) && !Files.isRegularFile(taskFile)) {
+            throw new IOException("Task storage path is not a regular file: " + taskFile);
+        }
+
+        if (Files.notExists(taskFile)) {
+            try {
+                Files.createFile(taskFile);
+            } catch (FileAlreadyExistsException exception) {
+                // Another process created the file after the existence check.
+            }
+        }
+    }
+
+    /**
+     * Atomically replaces the task file when the file system supports it.
+     */
+    private void moveIntoPlace(Path temporaryFile) throws IOException {
+        try {
+            Files.move(
+                    temporaryFile,
+                    taskFile,
+                    StandardCopyOption.ATOMIC_MOVE,
+                    StandardCopyOption.REPLACE_EXISTING);
+        } catch (AtomicMoveNotSupportedException exception) {
+            Files.move(temporaryFile, taskFile, StandardCopyOption.REPLACE_EXISTING);
         }
     }
 
@@ -136,7 +182,11 @@ public class Storage {
      */
     private Task createTask(String[] fields, int lineNumber) throws BosException {
         String taskType = fields[TASK_TYPE_INDEX].trim();
-        String description = fields[DESCRIPTION_INDEX].trim();
+        String description = getRequiredField(
+                fields,
+                DESCRIPTION_INDEX,
+                lineNumber,
+                "task description");
         return switch (taskType) {
             case TodoTask.STORAGE_TYPE -> createTodoTask(fields, description, lineNumber);
             case Deadline.STORAGE_TYPE -> createDeadlineTask(fields, description, lineNumber);
@@ -161,6 +211,7 @@ public class Storage {
             throws BosException {
         requireFieldCount(fields, DEADLINE_FIELD_COUNT, lineNumber);
         String deadline = getRequiredField(fields, DEADLINE_INDEX, lineNumber, "deadline");
+        validateStoredDateTime(deadline, "deadline", lineNumber);
         return new Deadline(description, deadline);
     }
 
@@ -172,6 +223,7 @@ public class Storage {
         requireFieldCount(fields, EVENT_FIELD_COUNT, lineNumber);
         String startTime = getRequiredField(fields, EVENT_START_INDEX, lineNumber, "event start time");
         String endTime = getRequiredField(fields, EVENT_END_INDEX, lineNumber, "event end time");
+        validateStoredEventTimes(startTime, endTime, lineNumber);
         return new Event(description, startTime, endTime);
     }
 
@@ -190,11 +242,40 @@ public class Storage {
      */
     private String getRequiredField(String[] fields, int fieldIndex, int lineNumber, String fieldName)
             throws BosException {
-        String field = fields[fieldIndex].trim();
+        String field = fields[fieldIndex].strip();
         if (field.isBlank()) {
             throw createInvalidDataException(lineNumber, fieldName + " is empty");
         }
-        return field;
+
+        try {
+            return Parser.normalizeTaskField(field);
+        } catch (BosException exception) {
+            throw createInvalidDataException(lineNumber, fieldName + " contains unsupported characters");
+        }
+    }
+
+    /**
+     * Converts a date-time validation failure into a storage error with a line number.
+     */
+    private void validateStoredDateTime(String dateTime, String fieldName, int lineNumber)
+            throws BosException {
+        try {
+            Parser.validateDateTime(dateTime, fieldName);
+        } catch (BosException exception) {
+            throw createInvalidDataException(lineNumber, exception.getMessage());
+        }
+    }
+
+    /**
+     * Converts an event range validation failure into a storage error with a line number.
+     */
+    private void validateStoredEventTimes(String startTime, String endTime, int lineNumber)
+            throws BosException {
+        try {
+            Parser.validateEventTimes(startTime, endTime);
+        } catch (BosException exception) {
+            throw createInvalidDataException(lineNumber, exception.getMessage());
+        }
     }
 
     /**
