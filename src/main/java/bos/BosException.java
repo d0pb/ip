@@ -36,6 +36,54 @@ public class BosException extends Exception {
     }
 
     /**
+     * Creates an error for a command that contains the same parameter more than once.
+     *
+     * @param parameter duplicated parameter marker.
+     * @return exception describing the repeated parameter.
+     */
+    public static BosException createRepeatedParameterException(String parameter) {
+        return new BosException("The " + parameter + " parameter may only be specified once.");
+    }
+
+    /**
+     * Creates an error for a date-time value that is malformed or does not exist.
+     *
+     * @param fieldName name of the invalid date-time field.
+     * @return exception describing the accepted date-time format.
+     */
+    public static BosException createInvalidDateTimeException(String fieldName) {
+        return new BosException(
+                "The " + fieldName + " must be a real date and time in yyyy-MM-dd HHmm format.");
+    }
+
+    /**
+     * Creates an error for an event whose end is not later than its start.
+     *
+     * @return exception describing the invalid time range.
+     */
+    public static BosException createInvalidEventRangeException() {
+        return new BosException("The event end must be later than its start.");
+    }
+
+    /**
+     * Creates an error for task data containing an unsupported character.
+     *
+     * @return exception describing the unsupported character.
+     */
+    public static BosException createInvalidTaskCharacterException() {
+        return new BosException("Task details cannot contain | or control characters.");
+    }
+
+    /**
+     * Creates an error for a command containing no text.
+     *
+     * @return exception describing the empty command.
+     */
+    public static BosException createEmptyCommandException() {
+        return new BosException("Please enter a command.");
+    }
+
+    /**
      * Creates an error for a task number that is missing or is not an integer.
      *
      * @return exception describing the invalid task number.
