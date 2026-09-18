@@ -194,3 +194,7 @@ afterward to exit the application.
   time is different.
 - Descriptions, dates, and times cannot contain the `|` character because Bos uses it to store task data.
 - `TASK_NUMBER` must be a whole number that currently appears in the full task list.
+
+## Use of AI
+
+Generative AI tools were used to assist with troubleshooting, build configuration, and documentation. All AI-assisted suggestions were reviewed and verified by the author.
